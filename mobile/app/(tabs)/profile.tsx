@@ -1,6 +1,10 @@
-import { View, Text, ScrollView, Image, Pressable } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, ScrollView, Image, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { supabase } from "../../lib/supabase";
+import { signOut } from "../../lib/auth";
+import i18n from "../../locales";
 
 type MenuItem = {
   id: string;
@@ -15,49 +19,72 @@ type Section = {
   items: MenuItem[];
 };
 
-const SECTIONS: Section[] = [
-  {
-    id: "account",
-    title: "Nalog",
-    items: [
-      { id: "personal", label: "Lični podaci" },
-      { id: "preferences", label: "Preferencije" },
-      { id: "notifications", label: "Notifikacije" },
-      { id: "subscription", label: "Pretplata" },
-    ],
-  },
-  {
-    id: "app",
-    title: "Podešavanja aplikacije",
-    items: [
-      { id: "language", label: "Jezik", value: "Srpski" },
-      { id: "theme", label: "Tema", value: "Tamna" },
-      { id: "about", label: "O aplikaciji" },
-    ],
-  },
-];
-
 export default function ProfileScreen() {
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const t = (key: string) => i18n.t(key);
+
+  useEffect(() => {
+    async function loadUser() {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        setUserEmail(data.user.email || "");
+        setUserName((data.user.user_metadata?.name as string) || "Korisnik");
+      }
+    }
+    loadUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.replace("/auth/login");
+    } catch (error: any) {
+      Alert.alert("Greška", error.message);
+    }
+  };
+
+  const SECTIONS: Section[] = [
+    {
+      id: "account",
+      title: t("profile.account"),
+      items: [
+        { id: "personal", label: t("profile.personalInfo") },
+        { id: "preferences", label: t("profile.preferences") },
+        { id: "notifications", label: t("profile.notifications") },
+        { id: "subscription", label: t("profile.subscription") },
+      ],
+    },
+    {
+      id: "app",
+      title: t("profile.appSettings"),
+      items: [
+        { id: "language", label: t("profile.language"), value: "Srpski" },
+        { id: "theme", label: t("profile.theme"), value: t("profile.themeDark") },
+        { id: "about", label: t("profile.about") },
+      ],
+    },
+  ];
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <View className="pt-4 pb-3 px-4">
         <Text className="text-text text-lg font-bold text-center">
-          Profil
+          {t("profile.title")}
         </Text>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-4 py-4 flex-row items-center gap-4">
-          <Image
-            source={{ uri: "https://placehold.co/256x256/1A1A1A/B3FF47" }}
-            className="w-24 h-24 rounded-full"
-          />
+          <View className="w-24 h-24 rounded-full bg-surface items-center justify-center border border-border">
+            <Text className="text-4xl">👤</Text>
+          </View>
           <View className="flex-1">
-            <Text className="text-text text-2xl font-bold mb-1">
-              Marija Dogandžić
+            <Text className="text-text text-2xl font-bold mb-1" numberOfLines={1}>
+              {userName || "..."}
             </Text>
-            <Text className="text-textSecondary text-base">
-              Premium član
+            <Text className="text-textSecondary text-sm" numberOfLines={1}>
+              {userEmail || "..."}
             </Text>
           </View>
         </View>
@@ -73,11 +100,7 @@ export default function ProfileScreen() {
             {section.items.map((item) => (
               <Pressable
                 key={item.id}
-                onPress={() => {
-                  if (item.id === "about") {
-                    router.push("/about");
-                  }
-                }}
+                onPress={item.onPress}
                 className="px-4 h-14 flex-row items-center justify-between border-b border-border/40"
               >
                 <Text className="text-text text-base">{item.label}</Text>
@@ -95,11 +118,11 @@ export default function ProfileScreen() {
         ))}
 
         <Pressable
-          onPress={() => router.replace("/")}
+          onPress={handleLogout}
           className="mx-4 mt-6 mb-8 py-4 rounded-2xl border border-border items-center"
         >
           <Text className="text-textSecondary text-base font-medium">
-            Odjavi se
+            {t("profile.logout")}
           </Text>
         </Pressable>
 

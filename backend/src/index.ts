@@ -1,17 +1,49 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { PrismaClient } from '@prisma/client';
+import { authenticate, requireAdmin, AuthRequest } from './middleware/auth';
+import recipesRouter from './routes/recipes';
+import foodsRouter from './routes/foods';
 
 dotenv.config();
 
 const app = express();
+const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.use('/recipes', recipesRouter);
+app.use('/foods', foodsRouter);
+
+app.get('/health', async (req, res) => {
+  try {
+    const foodCount = await prisma.food.count();
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      foods: foodCount,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: String(error) });
+  }
+});
+
+app.get('/profile', authenticate, (req: AuthRequest, res) => {
+  res.json({
+    message: 'Authenticated!',
+    user: req.user,
+  });
+});
+
+app.get('/admin/test', authenticate, requireAdmin, (req: AuthRequest, res) => {
+  res.json({
+    message: 'Admin access granted!',
+    user: req.user,
+  });
 });
 
 app.listen(PORT, () => {

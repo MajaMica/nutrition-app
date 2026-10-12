@@ -1,169 +1,65 @@
-import { router } from "expo-router";
-import { View, Text, TextInput, ScrollView, Image, Pressable } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, TextInput, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import i18n from "../../locales";
+import { apiGet } from "../../lib/api";
 
 type Recipe = {
   id: string;
   title: string;
-  description: string;
-  image: string;
+  description: string | null;
+  image: string | null;
+  mealType: string;
+  calories: number;
+  isPremium: boolean;
 };
-
-type Section = {
-  id: string;
-  title: string;
-  recipes: Recipe[];
-  large?: boolean;
-};
-
-const SECTIONS: Section[] = [
-  {
-    id: "all",
-    title: "Svi recepti",
-    large: true,
-    recipes: [
-      {
-        id: "1",
-        title: "Mediteranska salata sa kinoom",
-        description: "Osvežavajuća salata sa kinom, feta sirom i maslinama.",
-        image: "https://placehold.co/480x640/1A1A1A/B3FF47",
-      },
-      {
-        id: "2",
-        title: "Burgers sa crnim pasuljem",
-        description: "Ukusni vegetarijanski burgeri sa ljutim začinima.",
-        image: "https://placehold.co/480x640/1A1A1A/B3FF47",
-      },
-      {
-        id: "3",
-        title: "Piletina sa limunom",
-        description: "Mekana piletina sa marinadom od limuna i začina.",
-        image: "https://placehold.co/480x640/1A1A1A/B3FF47",
-      },
-    ],
-  },
-  {
-    id: "quick",
-    title: "Brzo i lako",
-    recipes: [
-      {
-        id: "4",
-        title: "Tost sa avokadom i jajetom",
-        description: "Brz i hranljiv doručak.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-      {
-        id: "5",
-        title: "Grčki jogurt sa voćem",
-        description: "Slojeviti desert sa voćem i granolom.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-      {
-        id: "6",
-        title: "Smoothie bowl",
-        description: "Zdrava i ukusna užina.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-    ],
-  },
-  {
-    id: "vegetarian",
-    title: "Vegetarijanski",
-    recipes: [
-      {
-        id: "7",
-        title: "Wok sa povrćem",
-        description: "Šareni wok sa tofujem i povrćem.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-      {
-        id: "8",
-        title: "Supa od sočiva",
-        description: "Bogata i ukusna supa od sočiva.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-      {
-        id: "9",
-        title: "Rižoto sa pečurkama",
-        description: "Kremasti rižoto sa šumskim pečurkama.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-    ],
-  },
-  {
-    id: "family",
-    title: "Za celu porodicu",
-    recipes: [
-      {
-        id: "10",
-        title: "Losos sa povrćem",
-        description: "Pečeni losos sa povrćem iz rerne.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-      {
-        id: "11",
-        title: "Tortilje sa piletinom",
-        description: "Zabavne tortilje sa piletinom.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-      {
-        id: "12",
-        title: "Testenina sa pestom",
-        description: "Prosta testenina sa pesto sosom.",
-        image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-      },
-    ],
-  },
-];
-
-function RecipeCard({ recipe, large }: { recipe: Recipe; large?: boolean }) {
-  const CARD_WIDTH = large ? 260 : 170;
-  const IMAGE_HEIGHT = large ? 320 : 213;
-
-  return (
-    <Pressable
-      style={{ width: CARD_WIDTH }}
-      className="gap-3"
-      onPress={() => router.push(`/recipe/${recipe.id}`)}
-    >
-      <Image
-        source={{ uri: recipe.image }}
-        style={{
-          width: "100%",
-          height: IMAGE_HEIGHT,
-          borderRadius: 16,
-        }}
-        resizeMode="cover"
-      />
-      <View>
-        <Text className="text-text text-base font-medium mb-1" numberOfLines={2}>
-          {recipe.title}
-        </Text>
-        <Text className="text-textSecondary text-sm" numberOfLines={2}>
-          {recipe.description}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
 
 export default function RecipesScreen() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const t = (key: string) => i18n.t(key);
+
+  useEffect(() => {
+    loadRecipes();
+  }, []);
+
+  async function loadRecipes() {
+    try {
+      setLoading(true);
+      const data = await apiGet<Recipe[]>("/recipes");
+      setRecipes(data);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const filtered = recipes.filter((r) =>
+    r.title.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="pt-4 pb-2 px-4 flex-row items-center justify-between">
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+      <View className="pt-2 pb-3 px-4 flex-row items-center justify-between">
         <Text className="text-text text-lg font-bold flex-1 text-center">
-          Recepti
+          {t("recipes.title")}
         </Text>
         <Pressable className="w-12 h-12 items-center justify-center">
           <Text className="text-text text-2xl">🔍</Text>
         </Pressable>
       </View>
 
-      <View className="px-4 py-3">
+      <View className="px-4 pb-3">
         <View className="h-12 bg-surface rounded-xl flex-row items-center px-4">
           <Text className="text-textSecondary text-lg mr-2">🔍</Text>
           <TextInput
-            placeholder="Pretraži recepte"
+            value={search}
+            onChangeText={setSearch}
+            placeholder={t("recipes.search")}
             placeholderTextColor="#9EADBF"
             className="flex-1 text-text text-base h-full"
           />
@@ -171,30 +67,74 @@ export default function RecipesScreen() {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {SECTIONS.map((section) => (
-          <View key={section.id} className="mb-2">
-            <View className="px-4 pt-5 pb-3">
-              <Text className="text-text text-2xl font-bold">
-                {section.title}
-              </Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              snapToInterval={section.large ? 260 + 12 : 170 + 12}
-              decelerationRate="fast"
-              contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingRight: 32 }}
-            >
-              {section.recipes.map((recipe) => (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  large={section.large}
-                />
-              ))}
-            </ScrollView>
+        {loading ? (
+          <View className="items-center py-12">
+            <ActivityIndicator color="#B3FF47" size="large" />
+            <Text className="text-textSecondary text-sm mt-4">
+              {t("common.loading")}
+            </Text>
           </View>
-        ))}
+        ) : error ? (
+          <View className="items-center py-12 px-6">
+            <Text className="text-4xl mb-3">⚠️</Text>
+            <Text className="text-textSecondary text-base text-center">
+              {error}
+            </Text>
+          </View>
+        ) : filtered.length === 0 ? (
+          <View className="items-center py-12 px-6">
+            <Text className="text-4xl mb-3">🍽️</Text>
+            <Text className="text-textSecondary text-base text-center">
+              {recipes.length === 0 ? "Još nema recepata" : "Nema rezultata"}
+            </Text>
+          </View>
+        ) : (
+          <View className="px-4">
+            {filtered.map((recipe) => (
+              <Pressable
+                key={recipe.id}
+                onPress={() => router.push(`/recipe/${recipe.id}`)}
+                className="bg-surface rounded-2xl mb-4 border border-border overflow-hidden"
+              >
+                {recipe.image ? (
+                  <Image
+                    source={{ uri: recipe.image }}
+                    className="w-full h-48"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="w-full h-48 bg-background items-center justify-center">
+                    <Text className="text-4xl">🍽️</Text>
+                  </View>
+                )}
+                <View className="p-4">
+                  <View className="flex-row items-center justify-between mb-1">
+                    <Text
+                      className="text-text text-base font-bold flex-1"
+                      numberOfLines={1}
+                    >
+                      {recipe.title}
+                    </Text>
+                    {recipe.isPremium && (
+                      <Text className="text-primary text-sm ml-2">⭐</Text>
+                    )}
+                  </View>
+                  {recipe.description && (
+                    <Text
+                      className="text-textSecondary text-sm mb-2"
+                      numberOfLines={2}
+                    >
+                      {recipe.description}
+                    </Text>
+                  )}
+                  <Text className="text-textSecondary text-xs">
+                    {recipe.mealType} · {Math.round(recipe.calories)} kcal
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         <View className="h-6" />
       </ScrollView>

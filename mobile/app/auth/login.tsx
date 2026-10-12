@@ -1,20 +1,28 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable } from "react-native";
+import { View, Text, TextInput, Pressable, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import i18n from "../../locales";
+import { signIn } from "../../lib/auth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const t = (key: string) => i18n.t(key);
 
   const isValid = email.includes("@") && password.length >= 6;
 
-  const handleLogin = () => {
-    if (!isValid) return;
-    console.log("Login:", { email, password });
-    router.replace("/(tabs)");
+  const handleLogin = async () => {
+    if (!isValid || loading) return;
+
+    setLoading(true);
+    try {
+      await signIn(email, password);
+    } catch (error: any) {
+      Alert.alert("Greška", error.message || "Neuspešna prijava");
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,6 +52,7 @@ export default function LoginScreen() {
                 placeholderTextColor="#666"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
                 className="text-text text-base"
               />
             </View>
@@ -61,30 +70,28 @@ export default function LoginScreen() {
                 className="text-text text-base"
               />
             </View>
-
-            <Pressable className="py-2 items-end">
-              <Text className="text-primary text-sm">
-                {t("auth.login.forgotPassword")}
-              </Text>
-            </Pressable>
           </View>
         </View>
 
         <View className="gap-4">
           <Pressable
             onPress={handleLogin}
-            disabled={!isValid}
+            disabled={!isValid || loading}
             className={`py-4 rounded-2xl items-center ${
-              isValid ? "bg-primary" : "bg-surface"
+              isValid && !loading ? "bg-primary" : "bg-surface"
             }`}
           >
-            <Text
-              className={`text-base font-bold ${
-                isValid ? "text-background" : "text-textSecondary"
-              }`}
-            >
-              {t("auth.login.submit")}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#0D0D0D" />
+            ) : (
+              <Text
+                className={`text-base font-bold ${
+                  isValid ? "text-background" : "text-textSecondary"
+                }`}
+              >
+                {t("auth.login.submit")}
+              </Text>
+            )}
           </Pressable>
 
           <Pressable

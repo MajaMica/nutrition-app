@@ -2,6 +2,7 @@ import { View, Text, Pressable, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import i18n from "../locales";
+import instructorImage from "../assets/images/branding/instructor-03.webp";
 
 export default function Welcome() {
   const t = (key: string) => i18n.t(key);
@@ -9,12 +10,12 @@ export default function Welcome() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1">
-        <View className="h-[55%] overflow-hidden">
-          <Image
-            source={{ uri: "https://placehold.co/403x537/1A1A1A/B3FF47" }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
+        <View className="h-[55%] overflow-hidden relative">
+         <Image
+  source={require("../assets/images/branding/instructor-03.webp")}
+  style={{ width: "100%", height: "100%" }}
+  resizeMode="cover"
+/>
         </View>
 
         <View className="flex-1 px-6 pt-8 pb-6 justify-between">

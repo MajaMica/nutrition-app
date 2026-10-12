@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import i18n from "../locales";
@@ -54,7 +54,13 @@ export function OnboardingLayout({
         )}
       </View>
 
-      <View className="px-6 gap-3 flex-1">{children}</View>
+      <ScrollView
+  className="flex-1"
+  contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
+  showsVerticalScrollIndicator={false}
+>
+  <View className="gap-3">{children}</View>
+</ScrollView>
 
       <View className="px-6 pb-8 pt-4">
         <Pressable

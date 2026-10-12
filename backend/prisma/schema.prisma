@@ -1,0 +1,79 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Food {
+  id          String   @id @default(uuid())
+  name        String
+  nameEn      String?  @map("name_en")
+  category    String
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  sugar       Float?
+  icon        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  ingredients RecipeIngredient[]
+
+  @@index([name])
+  @@index([category])
+  @@map("foods")
+}
+
+model Recipe {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  image       String?
+  mealType    String   @map("meal_type")
+  dietType    String?  @map("diet_type")
+  difficulty  String?
+  prepTime    Int?     @map("prep_time")
+  servings    Int      @default(1)
+  calories    Float    @default(0)
+  protein     Float    @default(0)
+  carbs       Float    @default(0)
+  fat         Float    @default(0)
+  isPremium   Boolean  @default(false) @map("is_premium")
+  isPublished Boolean  @default(true) @map("is_published")
+  ingredients RecipeIngredient[]
+  steps       RecipeStep[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([mealType])
+  @@index([dietType])
+  @@index([isPremium])
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id       String  @id @default(uuid())
+  recipeId String  @map("recipe_id")
+  foodId   String  @map("food_id")
+  amount   Float
+  unit     String  @default("g")
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  food     Food    @relation(fields: [foodId], references: [id])
+
+  @@map("recipe_ingredients")
+}
+
+model RecipeStep {
+  id       String  @id @default(uuid())
+  recipeId String  @map("recipe_id")
+  order    Int
+  text     String
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("recipe_steps")
+}

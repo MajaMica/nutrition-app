@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, Image, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { supabase } from "../../lib/supabase";
 
 type SuggestedRecipe = {
   id: string;
@@ -31,16 +33,30 @@ const SUGGESTED: SuggestedRecipe[] = [
 ];
 
 export default function HomeScreen() {
+  const [userName, setUserName] = useState("");
   const dailyGoal = 1800;
   const consumed = 1240;
   const percentage = Math.round((consumed / dailyGoal) * 100);
+
+  useEffect(() => {
+    async function loadUser() {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        const name = (data.user.user_metadata?.name as string) || "Korisnik";
+        setUserName(name.split(" ")[0]);
+      }
+    }
+    loadUser();
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-4 pb-3">
           <Text className="text-textSecondary text-sm mb-1">Zdravo,</Text>
-          <Text className="text-text text-3xl font-bold">Marija 👋</Text>
+          <Text className="text-text text-3xl font-bold">
+            {userName || "..."} 👋
+          </Text>
         </View>
 
         <View className="mx-4 mt-2 bg-surface rounded-3xl p-6 border border-border">

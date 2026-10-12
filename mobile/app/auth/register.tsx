@@ -1,22 +1,35 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable } from "react-native";
+import { View, Text, TextInput, Pressable, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import i18n from "../../locales";
+import { signUp } from "../../lib/auth";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const t = (key: string) => i18n.t(key);
 
-  const isValid =
-    name.length >= 2 && email.includes("@") && password.length >= 6;
+  const isValid = name.length >= 2 && email.includes("@") && password.length >= 6;
 
-  const handleRegister = () => {
-    if (!isValid) return;
-    console.log("Register:", { name, email, password });
-    router.replace("/(tabs)");
+  const handleRegister = async () => {
+    if (!isValid || loading) return;
+
+    setLoading(true);
+    try {
+      await signUp(email, password, name);
+      Alert.alert(
+        "Uspešno!",
+        "Nalog je kreiran. Možeš da se prijaviš.",
+        [{ text: "OK", onPress: () => router.replace("/auth/login") }]
+      );
+    } catch (error: any) {
+      Alert.alert("Greška", error.message || "Neuspešna registracija");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,6 +73,7 @@ export default function RegisterScreen() {
                 placeholderTextColor="#666"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
                 className="text-text text-base"
               />
             </View>
@@ -83,18 +97,22 @@ export default function RegisterScreen() {
         <View className="gap-4">
           <Pressable
             onPress={handleRegister}
-            disabled={!isValid}
+            disabled={!isValid || loading}
             className={`py-4 rounded-2xl items-center ${
-              isValid ? "bg-primary" : "bg-surface"
+              isValid && !loading ? "bg-primary" : "bg-surface"
             }`}
           >
-            <Text
-              className={`text-base font-bold ${
-                isValid ? "text-background" : "text-textSecondary"
-              }`}
-            >
-              {t("auth.register.submit")}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#0D0D0D" />
+            ) : (
+              <Text
+                className={`text-base font-bold ${
+                  isValid ? "text-background" : "text-textSecondary"
+                }`}
+              >
+                {t("auth.register.submit")}
+              </Text>
+            )}
           </Pressable>
 
           <Pressable
