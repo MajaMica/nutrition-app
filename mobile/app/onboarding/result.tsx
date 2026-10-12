@@ -21,22 +21,50 @@ function getActivityMultiplier(level: string | null) {
   }
 }
 
+function getProteinPerKg(goal: string | null) {
+  switch (goal) {
+    case "lose": return 1.8;
+    case "gain": return 1.8;
+    case "healthy": return 1.4;
+    default: return 1.2;
+  }
+}
+
+function getMinimumCalories(gender: string | null) {
+  return gender === "female" ? 1200 : 1500;
+}
+
 export default function ResultScreen() {
   const { data } = useOnboarding();
   const t = (key: string) => i18n.t(key);
 
   const currentYear = new Date().getFullYear();
   const age = data.birthYear ? currentYear - data.birthYear : 30;
-  const bmr = calculateBMR(data.weight ?? 70, data.height ?? 170, age, data.gender);
+  const weight = data.weight ?? 70;
+  const height = data.height ?? 170;
+
+  const bmr = calculateBMR(weight, height, age, data.gender);
   const tdee = Math.round(bmr * getActivityMultiplier(data.activityLevel));
 
   let targetCalories = tdee;
-  if (data.goal === "lose") targetCalories = Math.round(tdee - 500);
-  if (data.goal === "gain") targetCalories = Math.round(tdee + 300);
+  if (data.goal === "lose") targetCalories = tdee - 500;
+  if (data.goal === "healthy") targetCalories = tdee - 200;
+  if (data.goal === "gain") targetCalories = tdee + 300;
 
-  const protein = Math.round((targetCalories * 0.3) / 4);
-  const carbs = Math.round((targetCalories * 0.4) / 4);
-  const fat = Math.round((targetCalories * 0.3) / 9);
+  const minCalories = getMinimumCalories(data.gender);
+  if (targetCalories < minCalories) {
+    targetCalories = minCalories;
+  }
+
+  const proteinPerKg = getProteinPerKg(data.goal);
+  const proteinGrams = Math.round(weight * proteinPerKg);
+  const proteinCalories = proteinGrams * 4;
+
+  const fatCalories = targetCalories * 0.25;
+  const fatGrams = Math.round(fatCalories / 9);
+
+  const carbsCalories = targetCalories - proteinCalories - fatCalories;
+  const carbsGrams = Math.max(0, Math.round(carbsCalories / 4));
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -69,19 +97,19 @@ export default function ResultScreen() {
               <Text className="text-textSecondary text-xs mb-1">
                 {t("onboarding.result.protein")}
               </Text>
-              <Text className="text-text text-xl font-bold">{protein}g</Text>
+              <Text className="text-text text-xl font-bold">{proteinGrams}g</Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-textSecondary text-xs mb-1">
                 {t("onboarding.result.carbs")}
               </Text>
-              <Text className="text-text text-xl font-bold">{carbs}g</Text>
+              <Text className="text-text text-xl font-bold">{carbsGrams}g</Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-textSecondary text-xs mb-1">
                 {t("onboarding.result.fat")}
               </Text>
-              <Text className="text-text text-xl font-bold">{fat}g</Text>
+              <Text className="text-text text-xl font-bold">{fatGrams}g</Text>
             </View>
           </View>
         </View>

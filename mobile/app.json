@@ -1,24 +1,43 @@
 {
   "expo": {
-    "name": "Nutrition App",
-    "slug": "nutrition-app",
+    "name": "Chef Nemanja",
+    "slug": "majazen",
     "scheme": "nutritionapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D0D0D"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zencodelab.nutritionapp"
     },
     "android": {
-      "package": "com.zencodelab.nutritionapp"
+      "package": "com.zencodelab.nutritionapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D0D0D"
+      }
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5491b14b-095f-4b04-8965-1d4599df2412"
+      }
+    },
+    "owner": "majazencode"
   }
 }
