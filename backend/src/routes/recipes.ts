@@ -41,10 +41,20 @@ router.get('/:id', async (req, res) => {
 router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const {
-      title, description, image, mealType, dietType,
-      difficulty, prepTime, servings, isPremium,
-      ingredients, steps,
-    } = req.body;
+  title,
+  titleEn,
+  description,
+  descriptionEn,
+  image,
+  mealType,
+  dietType,
+  difficulty,
+  prepTime,
+  servings,
+  isPremium,
+  ingredients,
+  steps,
+} = req.body;
 
     if (!title || !mealType) {
       return res.status(400).json({ error: 'title and mealType are required' });
@@ -54,10 +64,17 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
 
     const recipe = await prisma.recipe.create({
       data: {
-        title, description, image, mealType, dietType,
-        difficulty, prepTime,
-        servings: servings || 1,
-        isPremium: isPremium || false,
+  title,
+  titleEn: titleEn || null,
+  description,
+  descriptionEn: descriptionEn || null,
+  image,
+  mealType,
+  dietType,
+  difficulty,
+  prepTime,
+  servings: servings || 1,
+  isPremium: isPremium || false,
         calories: nutrition.calories,
         protein: nutrition.protein,
         carbs: nutrition.carbs,
@@ -70,11 +87,12 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
           })),
         },
         steps: {
-          create: steps.map((step: any, index: number) => ({
-            order: index + 1,
-            text: step.text || step,
-          })),
-        },
+  create: steps.map((step: any, index: number) => ({
+    order: index + 1,
+    text: step.text || step,
+    textEn: step.textEn || null,
+  })),
+},
       },
       include: {
         ingredients: { include: { food: true } },
@@ -92,7 +110,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => 
   try {
     const { id } = req.params;
     const {
-      title, description, image, mealType, dietType,
+      title, titleEn, description, descriptionEn, image, mealType, dietType,
       difficulty, prepTime, servings, isPremium, isPublished,
       ingredients, steps,
     } = req.body;
@@ -109,7 +127,9 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => 
       where: { id: String(id) },
       data: {
         ...(title && { title }),
+        ...(titleEn !== undefined && { titleEn: titleEn || null }),
         ...(description !== undefined && { description }),
+        ...(descriptionEn !== undefined && { descriptionEn: descriptionEn || null }),
         ...(image !== undefined && { image }),
         ...(mealType && { mealType }),
         ...(dietType !== undefined && { dietType }),
@@ -138,6 +158,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => 
             create: steps.map((step: any, index: number) => ({
               order: index + 1,
               text: step.text || step,
+              textEn: step.textEn || null,
             })),
           },
         }),

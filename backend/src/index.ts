@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { authenticate, requireAdmin, AuthRequest } from './middleware/auth';
 import recipesRouter from './routes/recipes';
 import foodsRouter from './routes/foods';
+import profileRouter from './routes/profile';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 
 app.use('/recipes', recipesRouter);
 app.use('/foods', foodsRouter);
+app.use('/profile', profileRouter);
 
 app.get('/health', async (req, res) => {
   try {
@@ -30,13 +32,6 @@ app.get('/health', async (req, res) => {
   } catch (error) {
     res.status(500).json({ status: 'error', message: String(error) });
   }
-});
-
-app.get('/profile', authenticate, (req: AuthRequest, res) => {
-  res.json({
-    message: 'Authenticated!',
-    user: req.user,
-  });
 });
 
 app.get('/admin/test', authenticate, requireAdmin, (req: AuthRequest, res) => {

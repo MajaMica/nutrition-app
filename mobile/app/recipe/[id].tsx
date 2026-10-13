@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { View, Text, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { apiGet } from "../../lib/api";
+import i18n from "../../locales";
 
 type Food = {
   id: string;
@@ -47,11 +49,21 @@ type Recipe = {
   steps: Step[];
 };
 
-const MEAL_TYPE_LABELS: Record<string, string> = {
-  dorucak: "Doručak",
-  rucak: "Ručak",
-  vecera: "Večera",
-  uzina: "Užina",
+const MEAL_TYPE_KEYS: Record<string, string> = {
+  dorucak: "plan.breakfast",
+  rucak: "plan.lunch",
+  vecera: "plan.dinner",
+  uzina: "plan.snack",
+  breakfast: "plan.breakfast",
+  lunch: "plan.lunch",
+  dinner: "plan.dinner",
+  snack: "plan.snack",
+};
+
+const DIFFICULTY_KEYS: Record<string, string> = {
+  lako: "recipe.difficultyEasy",
+  srednje: "recipe.difficultyMedium",
+  tesko: "recipe.difficultyHard",
 };
 
 function isValidImageUrl(url: string | null): boolean {
@@ -66,6 +78,9 @@ export default function RecipeDetailScreen() {
   const [error, setError] = useState("");
   const [checked, setChecked] = useState<string[]>([]);
   const [servings, setServings] = useState(1);
+
+  const { language } = useLanguage();
+  const t = (key: string) => i18n.t(key);
 
   useEffect(() => {
     loadRecipe();
@@ -84,6 +99,16 @@ export default function RecipeDetailScreen() {
     }
   }
 
+  function getMealTypeLabel(mealType: string): string {
+    const key = MEAL_TYPE_KEYS[mealType.toLowerCase()];
+    return key ? t(key) : mealType;
+  }
+
+  function getDifficultyLabel(difficulty: string): string {
+    const key = DIFFICULTY_KEYS[difficulty.toLowerCase()];
+    return key ? t(key) : difficulty;
+  }
+
   const toggle = (ingredientId: string) => {
     setChecked((prev) =>
       prev.includes(ingredientId)
@@ -97,7 +122,9 @@ export default function RecipeDetailScreen() {
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#B3FF47" size="large" />
-          <Text className="text-textSecondary text-sm mt-4">Učitavanje...</Text>
+          <Text className="text-textSecondary text-sm mt-4">
+            {t("common.loading")}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -117,7 +144,7 @@ export default function RecipeDetailScreen() {
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-4xl mb-3">⚠️</Text>
           <Text className="text-textSecondary text-base text-center">
-            {error || "Recept nije pronađen"}
+            {error || t("recipe.notFound")}
           </Text>
         </View>
       </SafeAreaView>
@@ -179,7 +206,7 @@ export default function RecipeDetailScreen() {
         <View className="px-4 pt-3 pb-3 flex-row flex-wrap gap-2">
           <View className="bg-surface rounded-full px-3 py-1.5 border border-border">
             <Text className="text-textSecondary text-xs">
-              {MEAL_TYPE_LABELS[recipe.mealType] || recipe.mealType}
+              {getMealTypeLabel(recipe.mealType)}
             </Text>
           </View>
           {recipe.prepTime && (
@@ -192,7 +219,7 @@ export default function RecipeDetailScreen() {
           {recipe.difficulty && (
             <View className="bg-surface rounded-full px-3 py-1.5 border border-border">
               <Text className="text-textSecondary text-xs">
-                {recipe.difficulty}
+                {getDifficultyLabel(recipe.difficulty)}
               </Text>
             </View>
           )}
@@ -206,7 +233,9 @@ export default function RecipeDetailScreen() {
         </View>
 
         <View className="px-4 pt-5 pb-3 flex-row items-center justify-between">
-          <Text className="text-text text-2xl font-bold">Sastojci</Text>
+          <Text className="text-text text-2xl font-bold">
+            {t("recipe.ingredients")}
+          </Text>
           <View className="flex-row items-center gap-3 bg-surface rounded-full border border-border px-3 py-1">
             <Pressable
               onPress={() => setServings((s) => Math.max(1, s - 1))}
@@ -215,7 +244,10 @@ export default function RecipeDetailScreen() {
               <Text className="text-text text-lg">−</Text>
             </Pressable>
             <Text className="text-text text-sm font-bold">
-              {servings} {servings === 1 ? "porcija" : "porcije"}
+              {servings}{" "}
+              {servings === 1
+                ? t("recipe.serving")
+                : t("recipe.servings")}
             </Text>
             <Pressable
               onPress={() => setServings((s) => s + 1)}
@@ -249,14 +281,16 @@ export default function RecipeDetailScreen() {
                 </View>
                 <Text className="text-xl">{ing.food.icon || "🍽️"}</Text>
                 <Text
-                  className={`flex-1 text-base ${
-                    isChecked
-                      ? "text-textSecondary line-through"
-                      : "text-text"
-                  }`}
-                >
-                  {ing.food.name}
-                </Text>
+  className={`flex-1 text-base ${
+    isChecked
+      ? "text-textSecondary line-through"
+      : "text-text"
+  }`}
+>
+  {language === "en" && ing.food.nameEn
+    ? ing.food.nameEn
+    : ing.food.name}
+</Text>
                 <Text className="text-textSecondary text-sm">
                   {Math.round(scaledAmount * 10) / 10} {ing.unit}
                 </Text>
@@ -268,7 +302,9 @@ export default function RecipeDetailScreen() {
         {recipe.steps && recipe.steps.length > 0 && (
           <>
             <View className="px-4 pt-5 pb-3">
-              <Text className="text-text text-2xl font-bold">Priprema</Text>
+              <Text className="text-text text-2xl font-bold">
+                {t("recipe.instructions")}
+              </Text>
             </View>
 
             <View className="px-4">
@@ -290,24 +326,29 @@ export default function RecipeDetailScreen() {
 
         <View className="px-4 pt-5 pb-3">
           <Text className="text-text text-2xl font-bold">
-            Nutritivne vrednosti
+            {t("recipe.nutrition")}
           </Text>
           <Text className="text-textSecondary text-xs mt-1">
-            Za {servings} {servings === 1 ? "porciju" : "porcije"}
+            {t("recipe.for")} {servings}{" "}
+            {servings === 1 ? t("recipe.serving") : t("recipe.servings")}
           </Text>
         </View>
 
         <View className="px-4 pb-6">
           <View className="flex-row gap-3 mb-3">
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-textSecondary text-xs mb-1">Kalorije</Text>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("recipe.calories")}
+              </Text>
               <Text className="text-primary text-xl font-bold">
                 {Math.round(totalCalories)}
               </Text>
               <Text className="text-textSecondary text-xs">kcal</Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-textSecondary text-xs mb-1">Proteini</Text>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("recipe.protein")}
+              </Text>
               <Text className="text-text text-xl font-bold">
                 {Math.round(totalProtein * 10) / 10}g
               </Text>
@@ -316,14 +357,16 @@ export default function RecipeDetailScreen() {
 
           <View className="flex-row gap-3">
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-textSecondary text-xs mb-1">Masti</Text>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("recipe.fat")}
+              </Text>
               <Text className="text-text text-xl font-bold">
                 {Math.round(totalFat * 10) / 10}g
               </Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-textSecondary text-xs mb-1">
-                Ugljeni hidrati
+                {t("recipe.carbs")}
               </Text>
               <Text className="text-text text-xl font-bold">
                 {Math.round(totalCarbs * 10) / 10}g
@@ -338,11 +381,13 @@ export default function RecipeDetailScreen() {
       <View className="px-4 py-3 flex-row gap-3 border-t border-border">
         <Pressable className="flex-1 bg-primary py-3 rounded-full items-center">
           <Text className="text-background text-sm font-bold">
-            Sačuvaj recept
+            {t("recipe.save")}
           </Text>
         </Pressable>
         <Pressable className="w-24 bg-surface py-3 rounded-full items-center border border-border">
-          <Text className="text-text text-sm font-bold">Podeli</Text>
+          <Text className="text-text text-sm font-bold">
+            {t("recipe.share")}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>

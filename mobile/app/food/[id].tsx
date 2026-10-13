@@ -2,6 +2,8 @@ import { useState } from "react";
 import { View, Text, ScrollView, Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
+import { useLanguage } from "../../contexts/LanguageContext";
+import i18n from "../../locales";
 
 type Food = {
   name: string;
@@ -28,16 +30,19 @@ const FOOD: Food = {
 };
 
 const SERVING_UNITS = [
-  { id: "g", label: "gram", multiplier: 1 },
-  { id: "tbsp", label: "kašika", multiplier: 15 },
-  { id: "tsp", label: "kašičica", multiplier: 5 },
-  { id: "cup", label: "šolja", multiplier: 240 },
+  { id: "g", labelKey: "food.gram", multiplier: 1 },
+  { id: "tbsp", labelKey: "food.tbsp", multiplier: 15 },
+  { id: "tsp", labelKey: "food.tsp", multiplier: 5 },
+  { id: "cup", labelKey: "food.cup", multiplier: 240 },
 ];
 
 export default function FoodDetailScreen() {
   const { id } = useLocalSearchParams();
   const [amount, setAmount] = useState("100");
   const [unit, setUnit] = useState("g");
+
+  const { language } = useLanguage();
+  const t = (key: string) => i18n.t(key);
 
   const selectedUnit = SERVING_UNITS.find((u) => u.id === unit)!;
   const grams = (parseFloat(amount) || 0) * selectedUnit.multiplier;
@@ -55,7 +60,7 @@ export default function FoodDetailScreen() {
           <Text className="text-text text-2xl">←</Text>
         </Pressable>
         <Text className="text-text text-lg font-bold flex-1 text-center">
-          Detalji namirnice
+          {t("food.title")}
         </Text>
         <View className="w-12 h-12" />
       </View>
@@ -72,7 +77,9 @@ export default function FoodDetailScreen() {
         </View>
 
         <View className="px-4 pb-6">
-          <Text className="text-text text-lg font-bold mb-3">Količina</Text>
+          <Text className="text-text text-lg font-bold mb-3">
+            {t("food.amount")}
+          </Text>
 
           <View className="flex-row gap-3 mb-3">
             <View className="flex-1 bg-surface rounded-2xl p-3 border border-border flex-row items-center">
@@ -105,7 +112,7 @@ export default function FoodDetailScreen() {
                       isActive ? "text-background" : "text-text"
                     }`}
                   >
-                    {u.label}
+                    {t(u.labelKey)}
                   </Text>
                 </Pressable>
               );
@@ -115,12 +122,12 @@ export default function FoodDetailScreen() {
 
         <View className="px-4 pb-6">
           <Text className="text-text text-lg font-bold mb-3">
-            Nutritivne vrednosti
+            {t("food.nutrition")}
           </Text>
 
           <View className="bg-surface rounded-2xl p-5 border border-border mb-3">
             <Text className="text-textSecondary text-sm mb-2">
-              Kalorije ({grams.toFixed(0)}g)
+              {t("food.calories")} ({grams.toFixed(0)}g)
             </Text>
             <Text className="text-primary text-4xl font-bold">
               {calc(FOOD.calories)}
@@ -130,21 +137,25 @@ export default function FoodDetailScreen() {
 
           <View className="flex-row gap-3 mb-3">
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-textSecondary text-xs mb-1">Proteini</Text>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("food.protein")}
+              </Text>
               <Text className="text-text text-xl font-bold">
                 {calc(FOOD.protein)}g
               </Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-textSecondary text-xs mb-1">
-                Ugljeni hidrati
+                {t("food.carbs")}
               </Text>
               <Text className="text-text text-xl font-bold">
                 {calc(FOOD.carbs)}g
               </Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-textSecondary text-xs mb-1">Masti</Text>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("food.fat")}
+              </Text>
               <Text className="text-text text-xl font-bold">
                 {calc(FOOD.fat)}g
               </Text>
@@ -153,13 +164,17 @@ export default function FoodDetailScreen() {
 
           <View className="flex-row gap-3">
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-textSecondary text-xs mb-1">Vlakna</Text>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("food.fiber")}
+              </Text>
               <Text className="text-text text-base font-bold">
                 {calc(FOOD.fiber)}g
               </Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
-              <Text className="text-textSecondary text-xs mb-1">Šećeri</Text>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("food.sugar")}
+              </Text>
               <Text className="text-text text-base font-bold">
                 {calc(FOOD.sugar)}g
               </Text>
@@ -173,7 +188,7 @@ export default function FoodDetailScreen() {
       <View className="px-4 py-3 border-t border-border">
         <Pressable className="bg-primary py-4 rounded-2xl items-center">
           <Text className="text-background text-base font-bold">
-            Dodaj u obrok
+            {t("food.addToMeal")}
           </Text>
         </Pressable>
       </View>

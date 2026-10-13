@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import i18n from "../../locales";
 import { signUp } from "../../lib/auth";
+import { apiPut } from "../../lib/api";
+import { useOnboarding } from "../../contexts/OnboardingContext";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -11,6 +13,7 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const t = (key: string) => i18n.t(key);
+  const { data: onboardingData, resetData } = useOnboarding();
 
   const isValid = name.length >= 2 && email.includes("@") && password.length >= 6;
 
@@ -20,14 +23,31 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await signUp(email, password, name);
-      Alert.alert(
-        "Uspešno!",
-        "Nalog je kreiran. Možeš da se prijaviš.",
-        [{ text: "OK", onPress: () => router.replace("/auth/login") }]
-      );
+
+      const profileData = {
+        name,
+        birthYear: onboardingData.birthYear,
+        gender: onboardingData.gender,
+        height: onboardingData.height,
+        weight: onboardingData.weight,
+        targetWeight: onboardingData.targetWeight,
+        activityLevel: onboardingData.activityLevel,
+        dietType: onboardingData.dietType,
+        allergies: onboardingData.allergies,
+        dislikedFoods: onboardingData.dislikedFoods,
+        onboardingDone: true,
+      };
+
+      try {
+        await apiPut("/profile", profileData);
+      } catch (profileError) {
+        console.error("Profile save error:", profileError);
+      }
+
+      resetData();
+      router.replace("/(tabs)");
     } catch (error: any) {
-      Alert.alert("Greška", error.message || "Neuspešna registracija");
-    } finally {
+      Alert.alert("Greska", error.message || "Neuspesna registracija");
       setLoading(false);
     }
   };

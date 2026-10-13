@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { View, Text, ScrollView, Image, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { useLanguage } from "../../contexts/LanguageContext";
 import { supabase } from "../../lib/supabase";
+import i18n from "../../locales";
 
 type SuggestedRecipe = {
   id: string;
@@ -38,6 +40,9 @@ export default function HomeScreen() {
   const consumed = 1240;
   const percentage = Math.round((consumed / dailyGoal) * 100);
 
+  const { language } = useLanguage();
+  const t = (key: string) => i18n.t(key);
+
   useEffect(() => {
     async function loadUser() {
       const { data } = await supabase.auth.getUser();
@@ -53,7 +58,9 @@ export default function HomeScreen() {
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-4 pb-3">
-          <Text className="text-textSecondary text-sm mb-1">Zdravo,</Text>
+          <Text className="text-textSecondary text-sm mb-1">
+            {t("home.greeting")}
+          </Text>
           <Text className="text-text text-3xl font-bold">
             {userName || "..."} 👋
           </Text>
@@ -63,7 +70,7 @@ export default function HomeScreen() {
           <View className="flex-row items-center justify-between mb-6">
             <View>
               <Text className="text-textSecondary text-sm mb-1">
-                Dnevni cilj
+                {t("home.dailyGoal")}
               </Text>
               <Text className="text-text text-3xl font-bold">
                 {consumed}{" "}
@@ -88,9 +95,13 @@ export default function HomeScreen() {
         </View>
 
         <View className="px-4 pt-6 pb-3 flex-row items-center justify-between">
-          <Text className="text-text text-xl font-bold">Sledeći obrok</Text>
+          <Text className="text-text text-xl font-bold">
+            {t("home.nextMeal")}
+          </Text>
           <Pressable onPress={() => router.push("/plan")}>
-            <Text className="text-primary text-sm font-medium">Vidi sve</Text>
+            <Text className="text-primary text-sm font-medium">
+              {t("home.seeAll")}
+            </Text>
           </Pressable>
         </View>
 
@@ -106,15 +117,15 @@ export default function HomeScreen() {
             <Text className="text-text text-base font-medium mb-0.5">
               Tost sa avokadom
             </Text>
-            <Text className="text-textSecondary text-sm">
-              Doručak · 340 kcal
-            </Text>
+            <Text className="text-textSecondary text-sm">340 kcal</Text>
           </View>
           <Text className="text-textSecondary text-lg">›</Text>
         </Pressable>
 
         <View className="px-4 pt-6 pb-3">
-          <Text className="text-text text-xl font-bold">Brze akcije</Text>
+          <Text className="text-text text-xl font-bold">
+            {t("home.quickActions")}
+          </Text>
         </View>
 
         <View className="px-4 flex-row gap-3">
@@ -124,7 +135,7 @@ export default function HomeScreen() {
           >
             <Text className="text-3xl mb-2">🍳</Text>
             <Text className="text-text text-sm font-medium text-center">
-              Napravi recept
+              {t("home.makeRecipe")}
             </Text>
           </Pressable>
 
@@ -134,13 +145,13 @@ export default function HomeScreen() {
           >
             <Text className="text-3xl mb-2">🥕</Text>
             <Text className="text-text text-sm font-medium text-center">
-              Pretraži namirnice
+              {t("home.searchFoods")}
             </Text>
           </Pressable>
         </View>
 
         <View className="px-4 pt-6 pb-3">
-          <Text className="text-text text-xl font-bold">Za tebe</Text>
+          <Text className="text-text text-xl font-bold">{t("home.forYou")}</Text>
         </View>
 
         <ScrollView
@@ -189,10 +200,10 @@ export default function HomeScreen() {
             <Text className="text-4xl">📖</Text>
             <View className="flex-1">
               <Text className="text-background text-base font-bold mb-1">
-                Nova e-knjiga
+                {t("home.newEbook")}
               </Text>
               <Text className="text-background/80 text-sm">
-                Otključaj 50 recepata za zdravo mršavljenje
+                {t("home.newEbookDesc")}
               </Text>
             </View>
             <Text className="text-background text-2xl">›</Text>

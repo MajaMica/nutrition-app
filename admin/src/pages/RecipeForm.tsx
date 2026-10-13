@@ -20,11 +20,14 @@ type Ingredient = {
 
 type Step = {
   text: string;
+  textEn: string;
 };
 
 type RecipeData = {
   title: string;
+  titleEn: string;
   description: string;
+  descriptionEn: string;
   image: string;
   mealType: string;
   dietType: string;
@@ -53,7 +56,9 @@ export default function RecipeForm() {
 
   const [form, setForm] = useState<RecipeData>({
     title: "",
+    titleEn: "",
     description: "",
+    descriptionEn: "",
     image: "",
     mealType: "rucak",
     dietType: "",
@@ -63,7 +68,7 @@ export default function RecipeForm() {
     isPremium: false,
     isPublished: true,
     ingredients: [],
-    steps: [{ text: "" }],
+    steps: [{ text: "", textEn: "" }],
   });
 
   useEffect(() => {
@@ -86,7 +91,9 @@ export default function RecipeForm() {
       const data: any = await apiGet(`/recipes/${id}`);
       setForm({
         title: data.title || "",
+        titleEn: data.titleEn || "",
         description: data.description || "",
+        descriptionEn: data.descriptionEn || "",
         image: data.image || "",
         mealType: data.mealType || "rucak",
         dietType: data.dietType || "",
@@ -100,7 +107,10 @@ export default function RecipeForm() {
           amount: i.amount,
           unit: i.unit || "g",
         })),
-        steps: (data.steps || []).map((s: any) => ({ text: s.text })),
+        steps: (data.steps || []).map((s: any) => ({
+          text: s.text,
+          textEn: s.textEn || "",
+        })),
       });
     } catch (e: any) {
       setError(e.message);
@@ -133,13 +143,16 @@ export default function RecipeForm() {
   }
 
   function addStep() {
-    setForm((f) => ({ ...f, steps: [...f.steps, { text: "" }] }));
-  }
-
-  function updateStep(index: number, text: string) {
     setForm((f) => ({
       ...f,
-      steps: f.steps.map((s, i) => (i === index ? { text } : s)),
+      steps: [...f.steps, { text: "", textEn: "" }],
+    }));
+  }
+
+  function updateStep(index: number, patch: Partial<Step>) {
+    setForm((f) => ({
+      ...f,
+      steps: f.steps.map((s, i) => (i === index ? { ...s, ...patch } : s)),
     }));
   }
 
@@ -176,7 +189,6 @@ export default function RecipeForm() {
       setLoading(false);
     }
   }
-
 
   const totalNutrition = form.ingredients.reduce(
     (acc, ing) => {
@@ -221,7 +233,9 @@ export default function RecipeForm() {
           <h2 className="text-xl font-bold mb-2">Osnovno</h2>
 
           <div>
-            <label className="text-text-secondary text-xs block mb-2">Naslov</label>
+            <label className="text-textSecondary text-xs block mb-2">
+              Naslov (SR)
+            </label>
             <input
               type="text"
               value={form.title}
@@ -232,7 +246,22 @@ export default function RecipeForm() {
           </div>
 
           <div>
-            <label className="text-text-secondary text-xs block mb-2">Opis</label>
+            <label className="text-textSecondary text-xs block mb-2">
+              Naslov (EN)
+            </label>
+            <input
+              type="text"
+              value={form.titleEn}
+              onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
+              placeholder="Recipe title in English"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="text-textSecondary text-xs block mb-2">
+              Opis (SR)
+            </label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -242,7 +271,20 @@ export default function RecipeForm() {
           </div>
 
           <div>
-            <label className="text-text-secondary text-xs block mb-2">
+            <label className="text-textSecondary text-xs block mb-2">
+              Opis (EN)
+            </label>
+            <textarea
+              value={form.descriptionEn}
+              onChange={(e) => setForm({ ...form, descriptionEn: e.target.value })}
+              rows={3}
+              placeholder="Recipe description in English"
+              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-textSecondary text-xs block mb-2">
               URL slike
             </label>
             <input
@@ -256,7 +298,7 @@ export default function RecipeForm() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-text-secondary text-xs block mb-2">
+              <label className="text-textSecondary text-xs block mb-2">
                 Tip obroka
               </label>
               <select
@@ -273,7 +315,7 @@ export default function RecipeForm() {
             </div>
 
             <div>
-              <label className="text-text-secondary text-xs block mb-2">
+              <label className="text-textSecondary text-xs block mb-2">
                 Tip ishrane
               </label>
               <select
@@ -290,7 +332,7 @@ export default function RecipeForm() {
             </div>
 
             <div>
-              <label className="text-text-secondary text-xs block mb-2">
+              <label className="text-textSecondary text-xs block mb-2">
                 Tezina
               </label>
               <select
@@ -307,7 +349,7 @@ export default function RecipeForm() {
             </div>
 
             <div>
-              <label className="text-text-secondary text-xs block mb-2">
+              <label className="text-textSecondary text-xs block mb-2">
                 Vreme pripreme (min)
               </label>
               <input
@@ -324,7 +366,7 @@ export default function RecipeForm() {
             </div>
 
             <div>
-              <label className="text-text-secondary text-xs block mb-2">
+              <label className="text-textSecondary text-xs block mb-2">
                 Broj porcija
               </label>
               <input
@@ -439,7 +481,7 @@ export default function RecipeForm() {
 
           {form.ingredients.length > 0 && (
             <div className="mt-6 pt-4 border-t border-border">
-              <p className="text-text-secondary text-xs mb-2">
+              <p className="text-textSecondary text-xs mb-2">
                 Ukupno (automatski):
               </p>
               <div className="flex gap-6 text-sm">
@@ -475,12 +517,22 @@ export default function RecipeForm() {
                 <span className="w-8 h-8 flex items-center justify-center bg-background border border-border rounded-full text-sm mt-1">
                   {idx + 1}
                 </span>
-                <textarea
-                  value={step.text}
-                  onChange={(e) => updateStep(idx, e.target.value)}
-                  rows={2}
-                  className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-white outline-none focus:border-primary resize-none"
-                />
+                <div className="flex-1 gap-2 flex flex-col">
+                  <textarea
+                    value={step.text}
+                    onChange={(e) => updateStep(idx, { text: e.target.value })}
+                    rows={2}
+                    placeholder="Korak (SR)"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white outline-none focus:border-primary resize-none"
+                  />
+                  <textarea
+                    value={step.textEn}
+                    onChange={(e) => updateStep(idx, { textEn: e.target.value })}
+                    rows={2}
+                    placeholder="Step (EN)"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white outline-none focus:border-primary resize-none"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => removeStep(idx)}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { useLanguage } from "../../contexts/LanguageContext";
 import i18n from "../../locales";
 import { apiGet } from "../../lib/api";
 
@@ -23,11 +24,16 @@ const CATEGORIES: Category[] = [
   { id: "all", labelKey: "foods.all", icon: "🍽️" },
   { id: "dairy", labelKey: "foods.dairy", icon: "🧀" },
   { id: "meat", labelKey: "foods.meat", icon: "🥩" },
+  { id: "fish", labelKey: "foods.fish", icon: "🐟" },
   { id: "veggies", labelKey: "foods.veggies", icon: "🥕" },
   { id: "fruits", labelKey: "foods.fruits", icon: "🍎" },
   { id: "grains", labelKey: "foods.grains", icon: "🌾" },
   { id: "legumes", labelKey: "foods.legumes", icon: "🫘" },
+  { id: "nuts", labelKey: "foods.nuts", icon: "🥜" },
   { id: "oils", labelKey: "foods.oils", icon: "🫒" },
+  { id: "sweets", labelKey: "foods.sweets", icon: "🍫" },
+  { id: "drinks", labelKey: "foods.drinks", icon: "🥤" },
+  { id: "traditional", labelKey: "foods.traditional", icon: "🥘" },
 ];
 
 export default function FoodsScreen() {
@@ -36,6 +42,7 @@ export default function FoodsScreen() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
 
   useEffect(() => {
@@ -150,8 +157,8 @@ export default function FoodsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-text text-base font-medium mb-0.5">
-                  {food.name}
-                </Text>
+  {language === "en" && food.nameEn ? food.nameEn : food.name}
+</Text>
                 <Text className="text-textSecondary text-sm">
                   {food.calories} kcal / 100g
                 </Text>

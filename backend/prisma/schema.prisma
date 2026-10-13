@@ -30,25 +30,27 @@ model Food {
 }
 
 model Recipe {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  image       String?
-  mealType    String   @map("meal_type")
-  dietType    String?  @map("diet_type")
-  difficulty  String?
-  prepTime    Int?     @map("prep_time")
-  servings    Int      @default(1)
-  calories    Float    @default(0)
-  protein     Float    @default(0)
-  carbs       Float    @default(0)
-  fat         Float    @default(0)
-  isPremium   Boolean  @default(false) @map("is_premium")
-  isPublished Boolean  @default(true) @map("is_published")
-  ingredients RecipeIngredient[]
-  steps       RecipeStep[]
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid())
+  title         String
+  titleEn       String?  @map("title_en")
+  description   String?
+  descriptionEn String?  @map("description_en")
+  image         String?
+  mealType      String   @map("meal_type")
+  dietType      String?  @map("diet_type")
+  difficulty    String?
+  prepTime      Int?     @map("prep_time")
+  servings      Int      @default(1)
+  calories      Float    @default(0)
+  protein       Float    @default(0)
+  carbs         Float    @default(0)
+  fat           Float    @default(0)
+  isPremium     Boolean  @default(false) @map("is_premium")
+  isPublished   Boolean  @default(true) @map("is_published")
+  ingredients   RecipeIngredient[]
+  steps         RecipeStep[]
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@index([mealType])
   @@index([dietType])
@@ -73,7 +75,27 @@ model RecipeStep {
   recipeId String  @map("recipe_id")
   order    Int
   text     String
+  textEn   String? @map("text_en")
   recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@map("recipe_steps")
+}
+model User {
+  id              String   @id
+  email           String   @unique
+  name            String?
+  birthYear       Int?     @map("birth_year")
+  gender          String?
+  height          Int?
+  weight          Float?
+  targetWeight    Float?   @map("target_weight")
+  activityLevel   String?  @map("activity_level")
+  dietType        String?  @map("diet_type")
+  allergies       String[] @default([])
+  dislikedFoods   String[] @default([]) @map("disliked_foods")
+  onboardingDone  Boolean  @default(false) @map("onboarding_done")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
 }

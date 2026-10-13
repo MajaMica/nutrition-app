@@ -1,6 +1,8 @@
 import { View, Text, ScrollView, Image, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
+import { useLanguage } from "../../contexts/LanguageContext";
+import i18n from "../../locales";
 
 const EBOOK = {
   title: "50 recepata za zdravo mršavljenje",
@@ -20,6 +22,8 @@ const EBOOK = {
 
 export default function EbookDetailScreen() {
   const { id } = useLocalSearchParams();
+  const { language } = useLanguage();
+  const t = (key: string) => i18n.t(key);
 
   const handlePurchase = () => {
     console.log("Purchase ebook:", id);
@@ -35,7 +39,7 @@ export default function EbookDetailScreen() {
           <Text className="text-text text-2xl">←</Text>
         </Pressable>
         <Text className="text-text text-lg font-bold flex-1 text-center">
-          Detalji e-knjige
+          {t("ebooks.detailTitle")}
         </Text>
         <View className="w-12 h-12" />
       </View>
@@ -56,11 +60,13 @@ export default function EbookDetailScreen() {
           <View className="flex-row items-center gap-4 mb-4">
             <View className="bg-surface rounded-full px-3 py-1 border border-border">
               <Text className="text-textSecondary text-xs">
-                {EBOOK.pages} strana
+                {EBOOK.pages} {t("ebooks.pages")}
               </Text>
             </View>
             <View className="bg-surface rounded-full px-3 py-1 border border-border">
-              <Text className="text-textSecondary text-xs">PDF format</Text>
+              <Text className="text-textSecondary text-xs">
+                {t("ebooks.pdf")}
+              </Text>
             </View>
           </View>
           <Text className="text-textSecondary text-base leading-6">
@@ -70,7 +76,7 @@ export default function EbookDetailScreen() {
 
         <View className="px-4 pb-5">
           <Text className="text-text text-lg font-bold mb-3">
-            Šta ćeš dobiti
+            {t("ebooks.whatYouGet")}
           </Text>
           <View className="bg-surface rounded-2xl border border-border p-4">
             {EBOOK.chapters.map((chapter, index) => (
@@ -92,7 +98,9 @@ export default function EbookDetailScreen() {
 
       <View className="px-4 py-3 border-t border-border flex-row items-center gap-4">
         <View className="flex-1">
-          <Text className="text-textSecondary text-xs mb-1">Cena</Text>
+          <Text className="text-textSecondary text-xs mb-1">
+            {t("ebooks.price")}
+          </Text>
           <Text className="text-primary text-2xl font-bold">
             {EBOOK.price} RSD
           </Text>
@@ -102,7 +110,7 @@ export default function EbookDetailScreen() {
           className="bg-primary px-8 py-4 rounded-2xl"
         >
           <Text className="text-background text-base font-bold">
-            Kupi e-knjigu
+            {t("ebooks.buy")}
           </Text>
         </Pressable>
       </View>

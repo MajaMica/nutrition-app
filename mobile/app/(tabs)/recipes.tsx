@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { useLanguage } from "../../contexts/LanguageContext";
 import i18n from "../../locales";
 import { apiGet } from "../../lib/api";
 
@@ -15,11 +16,23 @@ type Recipe = {
   isPremium: boolean;
 };
 
+const MEAL_TYPE_KEYS: Record<string, string> = {
+  dorucak: "plan.breakfast",
+  rucak: "plan.lunch",
+  vecera: "plan.dinner",
+  uzina: "plan.snack",
+  breakfast: "plan.breakfast",
+  lunch: "plan.lunch",
+  dinner: "plan.dinner",
+  snack: "plan.snack",
+};
+
 export default function RecipesScreen() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
 
   useEffect(() => {
@@ -36,6 +49,11 @@ export default function RecipesScreen() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function getMealTypeLabel(mealType: string): string {
+    const key = MEAL_TYPE_KEYS[mealType.toLowerCase()];
+    return key ? t(key) : mealType;
   }
 
   const filtered = recipes.filter((r) =>
@@ -85,7 +103,9 @@ export default function RecipesScreen() {
           <View className="items-center py-12 px-6">
             <Text className="text-4xl mb-3">🍽️</Text>
             <Text className="text-textSecondary text-base text-center">
-              {recipes.length === 0 ? "Još nema recepata" : "Nema rezultata"}
+              {recipes.length === 0
+                ? t("recipes.empty")
+                : t("recipes.noResults")}
             </Text>
           </View>
         ) : (
@@ -128,7 +148,7 @@ export default function RecipesScreen() {
                     </Text>
                   )}
                   <Text className="text-textSecondary text-xs">
-                    {recipe.mealType} · {Math.round(recipe.calories)} kcal
+                    {getMealTypeLabel(recipe.mealType)} · {Math.round(recipe.calories)} kcal
                   </Text>
                 </View>
               </Pressable>

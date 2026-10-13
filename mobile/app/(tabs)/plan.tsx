@@ -2,11 +2,12 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { View, Text, ScrollView, Image, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLanguage } from "../../contexts/LanguageContext";
+import i18n from "../../locales";
 
 type Day = {
   id: string;
-  short: string;
-  full: string;
+  labelKey: string;
 };
 
 type Meal = {
@@ -18,57 +19,64 @@ type Meal = {
 };
 
 const DAYS: Day[] = [
-  { id: "mon", short: "Pon", full: "Ponedeljak" },
-  { id: "tue", short: "Uto", full: "Utorak" },
-  { id: "wed", short: "Sre", full: "Sreda" },
-  { id: "thu", short: "Čet", full: "Četvrtak" },
-  { id: "fri", short: "Pet", full: "Petak" },
-  { id: "sat", short: "Sub", full: "Subota" },
-  { id: "sun", short: "Ned", full: "Nedelja" },
+  { id: "mon", labelKey: "days.mon" },
+  { id: "tue", labelKey: "days.tue" },
+  { id: "wed", labelKey: "days.wed" },
+  { id: "thu", labelKey: "days.thu" },
+  { id: "fri", labelKey: "days.fri" },
+  { id: "sat", labelKey: "days.sat" },
+  { id: "sun", labelKey: "days.sun" },
 ];
 
 const MEALS_BY_DAY: Record<string, Meal[]> = {
   mon: [
-    { id: "m1", type: "Doručak", title: "Ovsenka sa bobičastim voćem", calories: 300, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "m2", type: "Ručak", title: "Sendvič sa piletinom", calories: 450, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "m3", type: "Večera", title: "Losos sa pečenim povrćem", calories: 600, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "m1", type: "breakfast", title: "Ovsenka sa bobičastim voćem", calories: 300, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "m2", type: "lunch", title: "Sendvič sa piletinom", calories: 450, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "m3", type: "dinner", title: "Losos sa pečenim povrćem", calories: 600, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
   ],
   tue: [
-    { id: "t1", type: "Doručak", title: "Jogurt sa granolom", calories: 280, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "t2", type: "Ručak", title: "Supa od sočiva", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "t3", type: "Večera", title: "Piletina sa brokolijem", calories: 520, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "t1", type: "breakfast", title: "Jogurt sa granolom", calories: 280, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "t2", type: "lunch", title: "Supa od sočiva", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "t3", type: "dinner", title: "Piletina sa brokolijem", calories: 520, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
   ],
   wed: [
-    { id: "w1", type: "Doručak", title: "Kajgana sa povrćem", calories: 320, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "w2", type: "Ručak", title: "Rižoto sa pečurkama", calories: 480, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "w3", type: "Večera", title: "Smoothie bowl", calories: 350, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "w1", type: "breakfast", title: "Kajgana sa povrćem", calories: 320, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "w2", type: "lunch", title: "Rižoto sa pečurkama", calories: 480, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "w3", type: "dinner", title: "Smoothie bowl", calories: 350, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
   ],
   thu: [
-    { id: "th1", type: "Doručak", title: "Tost sa avokadom", calories: 340, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "th2", type: "Ručak", title: "Tortilje sa piletinom", calories: 520, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "th3", type: "Večera", title: "Salata sa kinoom", calories: 420, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "th1", type: "breakfast", title: "Tost sa avokadom", calories: 340, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "th2", type: "lunch", title: "Tortilje sa piletinom", calories: 520, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "th3", type: "dinner", title: "Salata sa kinoom", calories: 420, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
   ],
   fri: [
-    { id: "f1", type: "Doručak", title: "Palačinke od ovsenog brašna", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "f2", type: "Ručak", title: "Testenina sa pestom", calories: 540, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "f3", type: "Večera", title: "Pečena piletina sa krompirom", calories: 600, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "f1", type: "breakfast", title: "Palačinke od ovsenog brašna", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "f2", type: "lunch", title: "Testenina sa pestom", calories: 540, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "f3", type: "dinner", title: "Pečena piletina sa krompirom", calories: 600, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
   ],
   sat: [
-    { id: "s1", type: "Doručak", title: "Musli sa jogurtom", calories: 340, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "s2", type: "Ručak", title: "Burgers sa crnim pasuljem", calories: 480, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "s3", type: "Večera", title: "Wok sa povrćem i tofujem", calories: 440, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "s1", type: "breakfast", title: "Musli sa jogurtom", calories: 340, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "s2", type: "lunch", title: "Burgers sa crnim pasuljem", calories: 480, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "s3", type: "dinner", title: "Wok sa povrćem i tofujem", calories: 440, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
   ],
   sun: [
-    { id: "su1", type: "Doručak", title: "Kroasan sa kafom", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "su2", type: "Ručak", title: "Nedeljni ručak - sarma", calories: 620, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "su3", type: "Večera", title: "Lagana supa", calories: 280, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "su1", type: "breakfast", title: "Kroasan sa kafom", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "su2", type: "lunch", title: "Nedeljni ručak - sarma", calories: 620, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
+    { id: "su3", type: "dinner", title: "Lagana supa", calories: 280, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
   ],
 };
 
-const MEAL_TYPES = ["Doručak", "Ručak", "Večera"];
+const MEAL_TYPES = [
+  { id: "breakfast", labelKey: "plan.breakfast" },
+  { id: "lunch", labelKey: "plan.lunch" },
+  { id: "dinner", labelKey: "plan.dinner" },
+];
 
 export default function PlanScreen() {
   const [selectedDay, setSelectedDay] = useState("mon");
+  const { language } = useLanguage();
+  const t = (key: string) => i18n.t(key);
+
   const meals = MEALS_BY_DAY[selectedDay] || [];
   const totalCalories = meals.reduce((sum, m) => sum + m.calories, 0);
 
@@ -76,7 +84,7 @@ export default function PlanScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <View className="pt-4 pb-2 px-4 flex-row items-center justify-between">
         <Text className="text-text text-lg font-bold flex-1 text-center">
-          Plan ishrane
+          {t("plan.title")}
         </Text>
         <Pressable className="w-12 h-12 items-center justify-center">
           <Text className="text-text text-2xl">📅</Text>
@@ -104,7 +112,7 @@ export default function PlanScreen() {
                     isActive ? "text-text" : "text-textSecondary"
                   }`}
                 >
-                  {day.short}
+                  {t(day.labelKey)}
                 </Text>
               </Pressable>
             );
@@ -115,19 +123,21 @@ export default function PlanScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-5 pb-3">
           <Text className="text-text text-sm">
-            Ukupno:{" "}
+            {t("plan.total")}:{" "}
             <Text className="text-primary font-bold">{totalCalories} kcal</Text>
           </Text>
         </View>
 
         {MEAL_TYPES.map((mealType) => {
-          const mealOfType = meals.filter((m) => m.type === mealType);
+          const mealOfType = meals.filter((m) => m.type === mealType.id);
           if (mealOfType.length === 0) return null;
 
           return (
-            <View key={mealType}>
+            <View key={mealType.id}>
               <View className="px-4 pt-5 pb-3">
-                <Text className="text-text text-2xl font-bold">{mealType}</Text>
+                <Text className="text-text text-2xl font-bold">
+                  {t(mealType.labelKey)}
+                </Text>
               </View>
 
               {mealOfType.map((meal) => (
@@ -160,7 +170,7 @@ export default function PlanScreen() {
         <Pressable className="mx-4 mt-6 mb-8 py-4 rounded-2xl border border-dashed border-border items-center flex-row justify-center gap-2">
           <Text className="text-textSecondary text-base">+</Text>
           <Text className="text-textSecondary text-base font-medium">
-            Dodaj obrok
+            {t("plan.addMeal")}
           </Text>
         </Pressable>
 
