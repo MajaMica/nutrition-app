@@ -16,6 +16,7 @@
     "expo-splash-screen": "~57.0.10",
     "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.26",
     "i18n-js": "^4.5.4",
     "nativewind": "^4.2.7",
     "react": "19.2.3",

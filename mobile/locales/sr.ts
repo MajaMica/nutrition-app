@@ -151,7 +151,7 @@ export default {
     nextMeal: "Sledeći obrok",
     seeAll: "Vidi sve",
     quickActions: "Brze akcije",
-    makeRecipe: "Napravi recept",
+    makeRecipe: "Pronađi recept",
     searchFoods: "Pretraži namirnice",
     forYou: "Za tebe",
     newEbook: "Nova e-knjiga",

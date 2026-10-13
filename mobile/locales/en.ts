@@ -151,7 +151,7 @@ export default {
     nextMeal: "Next meal",
     seeAll: "See all",
     quickActions: "Quick actions",
-    makeRecipe: "Make recipe",
+    makeRecipe: "Find recipe",
     searchFoods: "Search foods",
     forYou: "For you",
     newEbook: "New ebook",

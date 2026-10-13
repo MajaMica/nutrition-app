@@ -8,6 +8,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "icon": "./assets/icon.png",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5491b14b-095f-4b04-8965-1d4599df2412"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zencodelab.nutritionapp"
