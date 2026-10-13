@@ -324,5 +324,10 @@ export default {
   website: "Zvanični sajt",
   version: "Verzija",
 },
+placeholder: {
+  comingSoon: "Uskoro dostupno",
+  notificationsDesc: "Obaveštenja o novim receptima, planovima i savetima stižu uskoro.",
+  subscriptionDesc: "Premium pretplata sa ekskluzivnim sadržajem stiže uskoro.",
+},
 
 };

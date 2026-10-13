@@ -83,7 +83,11 @@ export default function ProfileScreen() {
           label: t("profile.notifications"),
           onPress: () => router.push("/account/notifications"),
         },
-        { id: "subscription", label: t("profile.subscription") },
+        {
+  id: "subscription",
+  label: t("profile.subscription"),
+  onPress: () => router.push("/account/subscription"),
+},
       ],
     },
     {

@@ -324,5 +324,10 @@ export default {
     website: "Official Website",
     version: "Version",
   },
+  placeholder: {
+  comingSoon: "Coming soon",
+  notificationsDesc: "Notifications about new recipes, plans and tips are coming soon.",
+  subscriptionDesc: "Premium subscription with exclusive content is coming soon.",
+},
   
 };
