@@ -28,12 +28,15 @@ type Step = {
   id: string;
   order: number;
   text: string;
+  textEn: string | null;
 };
 
 type Recipe = {
   id: string;
   title: string;
+  titleEn: string | null;
   description: string | null;
+  descriptionEn: string | null;
   image: string | null;
   mealType: string;
   dietType: string | null;
@@ -157,6 +160,13 @@ export default function RecipeDetailScreen() {
   const totalCarbs = recipe.carbs * servingsRatio;
   const totalFat = recipe.fat * servingsRatio;
 
+  const displayTitle =
+    language === "en" && recipe.titleEn ? recipe.titleEn : recipe.title;
+  const displayDescription =
+    language === "en" && recipe.descriptionEn
+      ? recipe.descriptionEn
+      : recipe.description;
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <View className="px-4 pt-2 pb-3 flex-row items-center justify-between">
@@ -187,7 +197,7 @@ export default function RecipeDetailScreen() {
         <View className="px-4 pt-5 pb-3">
           <View className="flex-row items-center justify-between">
             <Text className="text-text text-2xl font-bold flex-1 mr-2">
-              {recipe.title}
+              {displayTitle}
             </Text>
             {recipe.isPremium && (
               <Text className="text-primary text-2xl">⭐</Text>
@@ -195,10 +205,10 @@ export default function RecipeDetailScreen() {
           </View>
         </View>
 
-        {recipe.description && (
+        {displayDescription && (
           <View className="px-4 pt-1 pb-3">
             <Text className="text-textSecondary text-base leading-6">
-              {recipe.description}
+              {displayDescription}
             </Text>
           </View>
         )}
@@ -209,21 +219,21 @@ export default function RecipeDetailScreen() {
               {getMealTypeLabel(recipe.mealType)}
             </Text>
           </View>
-          {recipe.prepTime && (
+          {recipe.prepTime != null && (
             <View className="bg-surface rounded-full px-3 py-1.5 border border-border">
               <Text className="text-textSecondary text-xs">
                 ⏱ {recipe.prepTime} min
               </Text>
             </View>
           )}
-          {recipe.difficulty && (
+          {!!recipe.difficulty && (
             <View className="bg-surface rounded-full px-3 py-1.5 border border-border">
               <Text className="text-textSecondary text-xs">
                 {getDifficultyLabel(recipe.difficulty)}
               </Text>
             </View>
           )}
-          {recipe.dietType && (
+          {!!recipe.dietType && (
             <View className="bg-surface rounded-full px-3 py-1.5 border border-border">
               <Text className="text-textSecondary text-xs">
                 {recipe.dietType}
@@ -281,16 +291,16 @@ export default function RecipeDetailScreen() {
                 </View>
                 <Text className="text-xl">{ing.food.icon || "🍽️"}</Text>
                 <Text
-  className={`flex-1 text-base ${
-    isChecked
-      ? "text-textSecondary line-through"
-      : "text-text"
-  }`}
->
-  {language === "en" && ing.food.nameEn
-    ? ing.food.nameEn
-    : ing.food.name}
-</Text>
+                  className={`flex-1 text-base ${
+                    isChecked
+                      ? "text-textSecondary line-through"
+                      : "text-text"
+                  }`}
+                >
+                  {language === "en" && ing.food.nameEn
+                    ? ing.food.nameEn
+                    : ing.food.name}
+                </Text>
                 <Text className="text-textSecondary text-sm">
                   {Math.round(scaledAmount * 10) / 10} {ing.unit}
                 </Text>
@@ -316,7 +326,7 @@ export default function RecipeDetailScreen() {
                     </Text>
                   </View>
                   <Text className="flex-1 text-text text-base leading-6">
-                    {step.text}
+                    {language === "en" && step.textEn ? step.textEn : step.text}
                   </Text>
                 </View>
               ))}
