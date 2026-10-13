@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',        // ← DODAJ OVU LINIJU
+  darkMode: 'class',
   content: [
     "./app/**/*.{js,jsx,ts,tsx}",
     "./components/**/*.{js,jsx,ts,tsx}",
@@ -9,13 +9,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#B3FF47',
-        background: '#0D0D0D',
-        surface: '#1A1A1A',
-        text: '#FFFFFF',
-        textSecondary: '#A0A0A0',
-        border: '#2A2A2A',
-      },
+  primary: 'rgb(var(--color-primary) / <alpha-value>)',
+  background: 'rgb(var(--color-background) / <alpha-value>)',
+  surface: 'rgb(var(--color-surface) / <alpha-value>)',
+  text: 'rgb(var(--color-text) / <alpha-value>)',
+  textSecondary: 'rgb(var(--color-text-secondary) / <alpha-value>)',
+  border: 'rgb(var(--color-border) / <alpha-value>)',
+},
     },
   },
   plugins: [],

@@ -7,6 +7,7 @@ import { signOut } from "../../lib/auth";
 import { apiGetAuth } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
 import i18n from "../../locales";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type MenuItem = {
   id: string;
@@ -29,6 +30,7 @@ type UserProfile = {
 export default function ProfileScreen() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const { language } = useLanguage();
+  const { theme } = useTheme();
   const t = (key: string) => i18n.t(key);
 
   useFocusEffect(
@@ -94,8 +96,17 @@ export default function ProfileScreen() {
           value: language === "sr" ? "Srpski" : "English",
           onPress: () => router.push("/account/language"),
         },
-        { id: "theme", label: t("profile.theme"), value: t("profile.themeDark") },
-        { id: "about", label: t("profile.about") },
+        {
+          id: "theme",
+          label: t("profile.theme"),
+          value: theme === "dark" ? t("profile.themeDark") : t("profile.themeLight"),
+          onPress: () => router.push("/account/theme"),
+        },
+        {
+          id: "about",
+          label: t("profile.about"),
+          onPress: () => router.push("/account/about"),
+        },
       ],
     },
   ];

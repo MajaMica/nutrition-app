@@ -311,4 +311,18 @@ export default {
     buy: "Kupi e-knjigu",
     detailTitle: "Detalji e-knjige",
   },
+  theme: {
+    title: "Tema",
+    dark: "Tamna",
+    light: "Svetla",
+  },
+  about: {
+  title: "O aplikaciji",
+  subtitle: "Kuvar i fitness coach",
+  bio1: "Chef Nemanja je profesionalni kuvar i fitness coach koji već godinama pomaže ljudima da jedu ukusno i žive zdravo. Kroz ovu aplikaciju deli svoje recepte, planove ishrane i znanje — sve na jednom mestu, na srpskom jeziku.",
+  bio2: "Cilj aplikacije je da ti olakša put ka boljoj formi, bez komplikacija i bez strogih dijeta.",
+  website: "Zvanični sajt",
+  version: "Verzija",
+},
+
 };

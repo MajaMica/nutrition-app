@@ -311,4 +311,18 @@ export default {
     buy: "Buy ebook",
     detailTitle: "Ebook details",
   },
+  theme: {
+    title: "Theme",
+    dark: "Dark",
+    light: "Light",
+  },
+  about: {
+    title: "About",
+    subtitle: "Chef & Fitness Coach",
+    bio1: "Chef Nemanja is a professional chef and fitness coach who has spent years helping people eat well and live healthy. Through this app, he shares his recipes, meal plans and knowledge — all in one place.",
+    bio2: "The goal is to make your path to better shape easier, without complications and without strict diets.",
+    website: "Official Website",
+    version: "Version",
+  },
+  
 };
