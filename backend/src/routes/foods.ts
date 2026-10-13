@@ -20,6 +20,22 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const food = await prisma.food.findUnique({
+      where: { id: String(req.params.id) },
+    });
+
+    if (!food) {
+      return res.status(404).json({ error: "Namirnica nije pronađena" });
+    }
+
+    res.json(food);
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 router.post("/", authenticate, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const {

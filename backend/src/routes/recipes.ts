@@ -5,6 +5,69 @@ import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 const router = Router();
 const prisma = new PrismaClient();
 
+router.get('/suggestions', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      const recipes = await prisma.recipe.findMany({
+        where: { isPublished: true },
+        include: {
+          ingredients: { include: { food: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return res.json(recipes);
+    }
+
+    const userAllergies = user.allergies || [];
+    const userDiet = user.dietType || '';
+
+    const where: any = {
+      isPublished: true,
+    };
+
+    if (userAllergies.length > 0) {
+      where.ingredients = {
+        none: {
+          food: {
+            allergens: { hasSome: userAllergies },
+          },
+        },
+      };
+    }
+
+    if (userDiet && userDiet !== 'all' && userDiet !== '') {
+      if (userDiet === 'vegetarian') {
+        where.dietType = { in: ['vegetarian', 'vegan'] };
+      } else if (userDiet === 'fasting') {
+        where.dietType = { in: ['fasting', 'vegan'] };
+      } else {
+        where.dietType = userDiet;
+      }
+    }
+
+    const recipes = await prisma.recipe.findMany({
+      where,
+      include: {
+        ingredients: { include: { food: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(recipes);
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const recipes = await prisma.recipe.findMany({
@@ -41,20 +104,20 @@ router.get('/:id', async (req, res) => {
 router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const {
-  title,
-  titleEn,
-  description,
-  descriptionEn,
-  image,
-  mealType,
-  dietType,
-  difficulty,
-  prepTime,
-  servings,
-  isPremium,
-  ingredients,
-  steps,
-} = req.body;
+      title,
+      titleEn,
+      description,
+      descriptionEn,
+      image,
+      mealType,
+      dietType,
+      difficulty,
+      prepTime,
+      servings,
+      isPremium,
+      ingredients,
+      steps,
+    } = req.body;
 
     if (!title || !mealType) {
       return res.status(400).json({ error: 'title and mealType are required' });
@@ -64,17 +127,17 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
 
     const recipe = await prisma.recipe.create({
       data: {
-  title,
-  titleEn: titleEn || null,
-  description,
-  descriptionEn: descriptionEn || null,
-  image,
-  mealType,
-  dietType,
-  difficulty,
-  prepTime,
-  servings: servings || 1,
-  isPremium: isPremium || false,
+        title,
+        titleEn: titleEn || null,
+        description,
+        descriptionEn: descriptionEn || null,
+        image,
+        mealType,
+        dietType,
+        difficulty,
+        prepTime,
+        servings: servings || 1,
+        isPremium: isPremium || false,
         calories: nutrition.calories,
         protein: nutrition.protein,
         carbs: nutrition.carbs,
@@ -87,12 +150,12 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
           })),
         },
         steps: {
-  create: steps.map((step: any, index: number) => ({
-    order: index + 1,
-    text: step.text || step,
-    textEn: step.textEn || null,
-  })),
-},
+          create: steps.map((step: any, index: number) => ({
+            order: index + 1,
+            text: step.text || step,
+            textEn: step.textEn || null,
+          })),
+        },
       },
       include: {
         ingredients: { include: { food: true } },

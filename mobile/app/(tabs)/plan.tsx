@@ -167,14 +167,14 @@ export default function PlanScreen() {
           );
         })}
 
-        <Pressable className="mx-4 mt-6 mb-8 py-4 rounded-2xl border border-dashed border-border items-center flex-row justify-center gap-2">
+               <Pressable className="mx-4 mt-6 py-4 rounded-2xl border border-dashed border-border items-center flex-row justify-center gap-2">
           <Text className="text-textSecondary text-base">+</Text>
           <Text className="text-textSecondary text-base font-medium">
             {t("plan.addMeal")}
           </Text>
         </Pressable>
 
-        <View className="h-4" />
+        <View className="h-32" />
       </ScrollView>
     </SafeAreaView>
   );

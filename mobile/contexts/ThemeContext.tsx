@@ -6,7 +6,7 @@ type Theme = "dark" | "light";
 
 export const themeStyles = {
   dark: vars({
-    "--color-primary": "179 255 71",       // #B3FF47 — limeta
+    "--color-primary": "179 255 71",  
     "--color-background": "13 13 13",
     "--color-surface": "26 26 26",
     "--color-text": "255 255 255",
@@ -14,7 +14,7 @@ export const themeStyles = {
     "--color-border": "42 42 42",
   }),
   light: vars({
-    "--color-primary": "85 139 47",        // #558B2F — tamnija zelena
+    "--color-primary": "85 139 47",
     "--color-background": "255 255 255",
     "--color-surface": "245 245 245",
     "--color-text": "13 13 13",

@@ -29,14 +29,16 @@ export function useAuthProtection() {
 
     const inTabsGroup = segments[0] === "(tabs)";
     const inAuthGroup = segments[0] === "auth";
+    const inOnboarding = segments[0] === "onboarding";
+    const atRoot = segments.length === 0;
 
-    if (!isAuthenticated && inTabsGroup) {
-      router.replace("/auth/login");
+    if (isAuthenticated && (inAuthGroup || atRoot)) {
+      router.replace("/(tabs)");
       return;
     }
 
-    if (isAuthenticated && inAuthGroup) {
-      router.replace("/(tabs)");
+    if (!isAuthenticated && inTabsGroup) {
+      router.replace("/auth/login");
       return;
     }
   }, [isReady, isAuthenticated, segments]);

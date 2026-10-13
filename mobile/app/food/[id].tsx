@@ -1,32 +1,23 @@
-import { useState } from "react";
-import { View, Text, ScrollView, Pressable, TextInput } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, ScrollView, Pressable, TextInput, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { useLanguage } from "../../contexts/LanguageContext";
 import i18n from "../../locales";
+import { apiGet } from "../../lib/api";
 
 type Food = {
+  id: string;
   name: string;
-  icon: string;
+  nameEn: string | null;
+  icon: string | null;
   category: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
-  fiber: number;
-  sugar: number;
-};
-
-const FOOD: Food = {
-  name: "Kajmak",
-  icon: "🧀",
-  category: "Mlečni proizvodi",
-  calories: 350,
-  protein: 6.5,
-  carbs: 4.2,
-  fat: 33,
-  fiber: 0,
-  sugar: 4.2,
+  fiber: number | null;
+  sugar: number | null;
 };
 
 const SERVING_UNITS = [
@@ -38,17 +29,74 @@ const SERVING_UNITS = [
 
 export default function FoodDetailScreen() {
   const { id } = useLocalSearchParams();
+  const [food, setFood] = useState<Food | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [amount, setAmount] = useState("100");
   const [unit, setUnit] = useState("g");
 
   const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
 
+  useEffect(() => {
+    loadFood();
+  }, [id]);
+
+  async function loadFood() {
+    try {
+      setLoading(true);
+      const data = await apiGet<Food>(`/foods/${id}`);
+      setFood(data);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator color="#B3FF47" size="large" />
+          <Text className="text-textSecondary text-sm mt-4">
+            {t("common.loading")}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !food) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="px-4 pt-2 pb-3 flex-row items-center">
+          <Pressable
+            onPress={() => router.back()}
+            className="w-12 h-12 items-center justify-center"
+          >
+            <Text className="text-text text-2xl">←</Text>
+          </Pressable>
+        </View>
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-4xl mb-3">⚠️</Text>
+          <Text className="text-textSecondary text-base text-center">
+            {error || "Namirnica nije pronađena"}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const displayName =
+    language === "en" && food.nameEn ? food.nameEn : food.name;
+
   const selectedUnit = SERVING_UNITS.find((u) => u.id === unit)!;
   const grams = (parseFloat(amount) || 0) * selectedUnit.multiplier;
   const factor = grams / 100;
 
-  const calc = (value: number) => (value * factor).toFixed(1);
+  const calc = (value: number | null) =>
+    value != null ? (value * factor).toFixed(1) : "0.0";
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -68,12 +116,12 @@ export default function FoodDetailScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="items-center pt-4 pb-6">
           <View className="w-24 h-24 bg-surface rounded-3xl items-center justify-center mb-4">
-            <Text className="text-5xl">{FOOD.icon}</Text>
+            <Text className="text-5xl">{food.icon || "🍽️"}</Text>
           </View>
           <Text className="text-text text-2xl font-bold mb-1">
-            {FOOD.name}
+            {displayName}
           </Text>
-          <Text className="text-textSecondary text-sm">{FOOD.category}</Text>
+          <Text className="text-textSecondary text-sm">{food.category}</Text>
         </View>
 
         <View className="px-4 pb-6">
@@ -130,7 +178,7 @@ export default function FoodDetailScreen() {
               {t("food.calories")} ({grams.toFixed(0)}g)
             </Text>
             <Text className="text-primary text-4xl font-bold">
-              {calc(FOOD.calories)}
+              {calc(food.calories)}
             </Text>
             <Text className="text-textSecondary text-xs mt-1">kcal</Text>
           </View>
@@ -141,7 +189,7 @@ export default function FoodDetailScreen() {
                 {t("food.protein")}
               </Text>
               <Text className="text-text text-xl font-bold">
-                {calc(FOOD.protein)}g
+                {calc(food.protein)}g
               </Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
@@ -149,7 +197,7 @@ export default function FoodDetailScreen() {
                 {t("food.carbs")}
               </Text>
               <Text className="text-text text-xl font-bold">
-                {calc(FOOD.carbs)}g
+                {calc(food.carbs)}g
               </Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
@@ -157,7 +205,7 @@ export default function FoodDetailScreen() {
                 {t("food.fat")}
               </Text>
               <Text className="text-text text-xl font-bold">
-                {calc(FOOD.fat)}g
+                {calc(food.fat)}g
               </Text>
             </View>
           </View>
@@ -168,7 +216,7 @@ export default function FoodDetailScreen() {
                 {t("food.fiber")}
               </Text>
               <Text className="text-text text-base font-bold">
-                {calc(FOOD.fiber)}g
+                {calc(food.fiber)}g
               </Text>
             </View>
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
@@ -176,7 +224,7 @@ export default function FoodDetailScreen() {
                 {t("food.sugar")}
               </Text>
               <Text className="text-text text-base font-bold">
-                {calc(FOOD.sugar)}g
+                {calc(food.sugar)}g
               </Text>
             </View>
           </View>
