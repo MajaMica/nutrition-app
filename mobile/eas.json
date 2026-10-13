@@ -7,6 +7,11 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://epxlgiqmxyrfhpnjewsx.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_JNc7bURX5pvUmgCLl_hgYQ_PiOwVviU",
+        "EXPO_PUBLIC_API_URL": "https://api.zencodelab.dev"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -16,12 +21,22 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://epxlgiqmxyrfhpnjewsx.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_JNc7bURX5pvUmgCLl_hgYQ_PiOwVviU",
+        "EXPO_PUBLIC_API_URL": "https://api.zencodelab.dev"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://epxlgiqmxyrfhpnjewsx.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_JNc7bURX5pvUmgCLl_hgYQ_PiOwVviU",
+        "EXPO_PUBLIC_API_URL": "https://api.zencodelab.dev"
+      },
       "android": {
         "buildType": "app-bundle"
       }
