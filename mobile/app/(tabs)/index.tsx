@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useProfile } from "../../hooks/useProfile";
 import { calculateDailyCalories } from "../../lib/calories";
+import { loadPlan, calculateTotal } from "../../lib/mealPlan";
 import { supabase } from "../../lib/supabase";
 import { apiGetAuth, apiGet } from "../../lib/api";
 import i18n from "../../locales";
@@ -26,21 +27,38 @@ export default function HomeScreen() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const { profile, loading: profileLoading } = useProfile();
+const [consumed, setConsumed] = useState(0);
 
-  const dailyGoal = calculateDailyCalories(profile);
-  const consumed = 0;
-  const percentage =
-    dailyGoal > 0
-      ? Math.min(Math.round((consumed / dailyGoal) * 100), 100)
-      : 0;
+const dailyGoal = calculateDailyCalories(profile);
+const percentage =
+  dailyGoal > 0
+    ? Math.min(Math.round((consumed / dailyGoal) * 100), 100)
+    : 0;
 
   const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
 
   useEffect(() => {
-    loadUser();
-    loadRecipes();
-  }, []);
+  loadUser();
+  loadRecipes();
+}, []);
+
+// Ucitaj izabrane obroke iz Plana kad se ekran fokusira
+useFocusEffect(
+  useCallback(() => {
+    loadConsumed();
+  }, [])
+);
+
+async function loadConsumed() {
+  try {
+    const plan = await loadPlan();
+    const totals = calculateTotal(plan);
+    setConsumed(totals.calories);
+  } catch {
+    setConsumed(0);
+  }
+}
 
   async function loadUser() {
     const { data } = await supabase.auth.getUser();
