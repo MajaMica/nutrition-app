@@ -38,7 +38,9 @@ model Recipe {
   descriptionEn String?  @map("description_en")
   image         String?
   mealType      String   @map("meal_type")
-  dietType      String?  @map("diet_type")
+mealTypes     String[] @default([]) @map("meal_types")
+dietType      String?  @map("diet_type")
+dietTypes     String[] @default([]) @map("diet_types")
   difficulty    String?
   prepTime      Int?     @map("prep_time")
   servings      Int      @default(1)

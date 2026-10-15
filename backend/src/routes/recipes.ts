@@ -45,13 +45,22 @@ router.get('/suggestions', authenticate, async (req: AuthRequest, res) => {
     }
 
     if (userDiet && userDiet !== 'all' && userDiet !== '') {
+      let dietValues: string[];
       if (userDiet === 'vegetarian') {
-        where.dietType = { in: ['vegetarian', 'vegan'] };
+        dietValues = ['vegetarian', 'vegan'];
       } else if (userDiet === 'fasting') {
-        where.dietType = { in: ['fasting', 'vegan'] };
+        dietValues = ['fasting', 'vegan'];
       } else {
-        where.dietType = userDiet;
+        dietValues = [userDiet];
       }
+
+      where.OR = [
+        { dietType: null },
+        { dietType: '' },
+        { dietType: { in: dietValues } },
+        { dietTypes: { hasSome: dietValues } },
+        { dietTypes: { isEmpty: true } },
+      ];
     }
 
     const recipes = await prisma.recipe.findMany({
@@ -110,7 +119,9 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
       descriptionEn,
       image,
       mealType,
+      mealTypes,
       dietType,
+      dietTypes,
       difficulty,
       prepTime,
       servings,
@@ -119,7 +130,23 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
       steps,
     } = req.body;
 
-    if (!title || !mealType) {
+    const normalizedMealTypes: string[] =
+      Array.isArray(mealTypes) && mealTypes.length > 0
+        ? mealTypes
+        : mealType
+        ? [mealType]
+        : [];
+
+    const normalizedDietTypes: string[] =
+      Array.isArray(dietTypes) && dietTypes.length > 0
+        ? dietTypes
+        : dietType
+        ? [dietType]
+        : [];
+
+    const primaryMealType = mealType || normalizedMealTypes[0] || 'rucak';
+
+    if (!title || !primaryMealType) {
       return res.status(400).json({ error: 'title and mealType are required' });
     }
 
@@ -132,8 +159,10 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
         description,
         descriptionEn: descriptionEn || null,
         image,
-        mealType,
-        dietType,
+        mealType: primaryMealType,
+        mealTypes: normalizedMealTypes,
+        dietType: dietType || normalizedDietTypes[0] || null,
+        dietTypes: normalizedDietTypes,
         difficulty,
         prepTime,
         servings: servings || 1,
@@ -173,15 +202,42 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => 
   try {
     const { id } = req.params;
     const {
-      title, titleEn, description, descriptionEn, image, mealType, dietType,
-      difficulty, prepTime, servings, isPremium, isPublished,
-      ingredients, steps,
+      title,
+      titleEn,
+      description,
+      descriptionEn,
+      image,
+      mealType,
+      mealTypes,
+      dietType,
+      dietTypes,
+      difficulty,
+      prepTime,
+      servings,
+      isPremium,
+      isPublished,
+      ingredients,
+      steps,
     } = req.body;
 
     let nutrition = null;
     if (ingredients && ingredients.length > 0) {
       nutrition = await calculateNutrition(ingredients);
     }
+
+    const normalizedMealTypes =
+      Array.isArray(mealTypes) && mealTypes.length > 0
+        ? mealTypes
+        : mealType
+        ? [mealType]
+        : null;
+
+    const normalizedDietTypes =
+      Array.isArray(dietTypes) && dietTypes.length > 0
+        ? dietTypes
+        : dietType
+        ? [dietType]
+        : [];
 
     await prisma.recipeIngredient.deleteMany({ where: { recipeId: String(id) } });
     await prisma.recipeStep.deleteMany({ where: { recipeId: String(id) } });
@@ -195,7 +251,9 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => 
         ...(descriptionEn !== undefined && { descriptionEn: descriptionEn || null }),
         ...(image !== undefined && { image }),
         ...(mealType && { mealType }),
+        ...(normalizedMealTypes && { mealTypes: normalizedMealTypes }),
         ...(dietType !== undefined && { dietType }),
+        ...(dietTypes !== undefined && { dietTypes: normalizedDietTypes }),
         ...(difficulty !== undefined && { difficulty }),
         ...(prepTime !== undefined && { prepTime }),
         ...(servings && { servings }),

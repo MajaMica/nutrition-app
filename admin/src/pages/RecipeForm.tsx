@@ -29,8 +29,8 @@ type RecipeData = {
   description: string;
   descriptionEn: string;
   image: string;
-  mealType: string;
-  dietType: string;
+  mealTypes: string[];
+  dietTypes: string[];
   difficulty: string;
   prepTime: number | "";
   servings: number;
@@ -41,7 +41,17 @@ type RecipeData = {
 };
 
 const MEAL_TYPES = ["dorucak", "rucak", "vecera", "uzina"];
-const DIET_TYPES = ["", "vegetarian", "vegan", "gluten-free", "lactose-free", "fasting"];
+
+const DIET_TYPES = [
+  "vegetarian",
+  "vegan",
+  "gluten-free",
+  "lactose-free",
+  "noSugar",
+  "noPork",
+  "fasting",
+];
+
 const DIFFICULTIES = ["", "lako", "srednje", "tesko"];
 const UNITS = ["g", "tbsp", "tsp", "cup"];
 
@@ -60,8 +70,8 @@ export default function RecipeForm() {
     description: "",
     descriptionEn: "",
     image: "",
-    mealType: "rucak",
-    dietType: "",
+    mealTypes: [],
+    dietTypes: [],
     difficulty: "",
     prepTime: "",
     servings: 1,
@@ -89,14 +99,29 @@ export default function RecipeForm() {
     try {
       setLoading(true);
       const data: any = await apiGet(`/recipes/${id}`);
+
+      let mealTypes: string[] = [];
+      if (Array.isArray(data.mealTypes) && data.mealTypes.length > 0) {
+        mealTypes = data.mealTypes;
+      } else if (data.mealType) {
+        mealTypes = [data.mealType];
+      }
+
+      let dietTypes: string[] = [];
+      if (Array.isArray(data.dietTypes) && data.dietTypes.length > 0) {
+        dietTypes = data.dietTypes;
+      } else if (data.dietType) {
+        dietTypes = [data.dietType];
+      }
+
       setForm({
         title: data.title || "",
         titleEn: data.titleEn || "",
         description: data.description || "",
         descriptionEn: data.descriptionEn || "",
         image: data.image || "",
-        mealType: data.mealType || "rucak",
-        dietType: data.dietType || "",
+        mealTypes,
+        dietTypes,
         difficulty: data.difficulty || "",
         prepTime: data.prepTime ?? "",
         servings: data.servings || 1,
@@ -117,6 +142,24 @@ export default function RecipeForm() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function toggleMealType(value: string) {
+    setForm((f) => ({
+      ...f,
+      mealTypes: f.mealTypes.includes(value)
+        ? f.mealTypes.filter((v) => v !== value)
+        : [...f.mealTypes, value],
+    }));
+  }
+
+  function toggleDietType(value: string) {
+    setForm((f) => ({
+      ...f,
+      dietTypes: f.dietTypes.includes(value)
+        ? f.dietTypes.filter((v) => v !== value)
+        : [...f.dietTypes, value],
+    }));
   }
 
   function addIngredient() {
@@ -166,14 +209,25 @@ export default function RecipeForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (form.mealTypes.length === 0) {
+      setError("Izaberi bar jedan tip obroka");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const primaryMealType = form.mealTypes[0];
+      const primaryDietType = form.dietTypes[0] || "";
+
       const payload = {
         ...form,
+        mealType: primaryMealType,
+        dietType: primaryDietType,
         prepTime: form.prepTime === "" ? null : Number(form.prepTime),
         ingredients: form.ingredients.filter((i) => i.foodId),
-        steps: form.steps.filter((s) => s.text.trim()),
+        steps: form.steps.filter((s) => s.text.trim() || s.textEn.trim()),
       };
 
       if (isEdit) {
@@ -296,41 +350,59 @@ export default function RecipeForm() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-textSecondary text-xs block mb-2">
-                Tip obroka
-              </label>
-              <select
-                value={form.mealType}
-                onChange={(e) => setForm({ ...form, mealType: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary"
-              >
-                {MEAL_TYPES.map((m) => (
-                  <option key={m} value={m}>
+          <div>
+            <label className="text-textSecondary text-xs block mb-2">
+              Tip obroka <span className="text-primary">(može više)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {MEAL_TYPES.map((m) => {
+                const isActive = form.mealTypes.includes(m);
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => toggleMealType(m)}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium capitalize ${
+                      isActive
+                        ? "bg-primary border-primary text-background"
+                        : "bg-background border-border text-text"
+                    }`}
+                  >
+                    {isActive && "✓ "}
                     {m}
-                  </option>
-                ))}
-              </select>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div>
-              <label className="text-textSecondary text-xs block mb-2">
-                Tip ishrane
-              </label>
-              <select
-                value={form.dietType}
-                onChange={(e) => setForm({ ...form, dietType: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary"
-              >
-                {DIET_TYPES.map((d) => (
-                  <option key={d} value={d}>
-                    {d || "sve"}
-                  </option>
-                ))}
-              </select>
+          <div>
+            <label className="text-textSecondary text-xs block mb-2">
+              Tip ishrane <span className="text-primary">(može više, opciono)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {DIET_TYPES.map((d) => {
+                const isActive = form.dietTypes.includes(d);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => toggleDietType(d)}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium ${
+                      isActive
+                        ? "bg-primary border-primary text-background"
+                        : "bg-background border-border text-text"
+                    }`}
+                  >
+                    {isActive && "✓ "}
+                    {d}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-textSecondary text-xs block mb-2">
                 Tezina
