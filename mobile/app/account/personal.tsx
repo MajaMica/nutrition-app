@@ -14,6 +14,7 @@ type Profile = {
   weight: number | null;
   targetWeight: number | null;
   activityLevel: string | null;
+  goal: string | null;
 };
 
 const GENDERS = [
@@ -28,6 +29,12 @@ const ACTIVITIES = [
   { id: "active", labelKey: "onboarding.activity.active" },
   { id: "very_active", labelKey: "onboarding.activity.veryActive" },
 ];
+const GOALS = [
+  { id: "lose", labelKey: "onboarding.goal.lose", icon: "⬇️" },
+  { id: "healthy", labelKey: "onboarding.goal.healthy", icon: "🥗" },
+  { id: "maintain", labelKey: "onboarding.goal.maintain", icon: "⚖️" },
+  { id: "gain", labelKey: "onboarding.goal.gain", icon: "⬆️" },
+];
 
 export default function PersonalInfoScreen() {
   const [loading, setLoading] = useState(true);
@@ -41,6 +48,7 @@ export default function PersonalInfoScreen() {
   const [weight, setWeight] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
   const [activityLevel, setActivityLevel] = useState<string | null>(null);
+  const [goal, setGoal] = useState<string | null>(null);
 
   const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
@@ -59,6 +67,7 @@ export default function PersonalInfoScreen() {
       setWeight(data.weight?.toString() ?? "");
       setTargetWeight(data.targetWeight?.toString() ?? "");
       setActivityLevel(data.activityLevel);
+      setGoal(data.goal);
     } catch (e: any) {
       setMessage({ type: "error", text: e.message });
     } finally {
@@ -71,14 +80,15 @@ export default function PersonalInfoScreen() {
     setMessage(null);
     try {
       await apiPut("/profile", {
-        name: name || null,
-        birthYear: birthYear ? parseInt(birthYear) : null,
-        gender,
-        height: height ? parseInt(height) : null,
-        weight: weight ? parseFloat(weight) : null,
-        targetWeight: targetWeight ? parseFloat(targetWeight) : null,
-        activityLevel,
-      });
+  name: name || null,
+  birthYear: birthYear ? parseInt(birthYear) : null,
+  gender,
+  height: height ? parseInt(height) : null,
+  weight: weight ? parseFloat(weight) : null,
+  targetWeight: targetWeight ? parseFloat(targetWeight) : null,
+  activityLevel,
+  goal,
+});
       setMessage({ type: "success", text: t("account.saved") });
       setTimeout(() => setMessage(null), 3000);
     } catch (e: any) {
@@ -226,6 +236,32 @@ export default function PersonalInfoScreen() {
               })}
             </View>
           </View>
+          <View>
+  <Text className="text-textSecondary text-xs mb-2">{t("onboarding.goal.title")}</Text>
+  <View className="flex-row gap-2 flex-wrap">
+    {GOALS.map((g) => {
+      const isActive = goal === g.id;
+      return (
+        <Pressable
+          key={g.id}
+          onPress={() => setGoal(g.id)}
+          className={`px-4 py-3 rounded-full border flex-row items-center gap-2 ${
+            isActive ? "bg-primary border-primary" : "bg-surface border-border"
+          }`}
+        >
+          <Text className="text-base">{g.icon}</Text>
+          <Text
+            className={`text-sm font-medium ${
+              isActive ? "text-background" : "text-text"
+            }`}
+          >
+            {t(g.labelKey)}
+          </Text>
+        </Pressable>
+      );
+    })}
+  </View>
+</View>
 
           {message && (
             <View

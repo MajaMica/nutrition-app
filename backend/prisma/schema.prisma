@@ -91,6 +91,7 @@ model User {
   weight          Float?
   targetWeight    Float?   @map("target_weight")
   activityLevel   String?  @map("activity_level")
+    goal            String?
   dietType        String?  @map("diet_type")
   allergies       String[] @default([])
   dislikedFoods   String[] @default([]) @map("disliked_foods")

@@ -1,6 +1,7 @@
 import "../global.css";
 import { Stack } from "expo-router";
 import { View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { OnboardingProvider } from "../contexts/OnboardingContext";
 import { LanguageProvider } from "../contexts/LanguageContext";
@@ -19,14 +20,16 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <LanguageProvider>
-          <OnboardingProvider>
-            <RootLayoutNav />
-          </OnboardingProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <OnboardingProvider>
+              <RootLayoutNav />
+            </OnboardingProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

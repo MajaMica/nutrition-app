@@ -1,178 +1,361 @@
-import { router } from "expo-router";
-import { useState } from "react";
-import { View, Text, ScrollView, Image, Pressable } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router, useFocusEffect } from "expo-router";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useProfile } from "../../hooks/useProfile";
+import { calculateDailyCalories } from "../../lib/calories";
+import { apiGetAuth, apiGet } from "../../lib/api";
+import {
+  loadPlan,
+  setMeal,
+  calculateTotal,
+  countSelected,
+  getWeekDays,
+  isSameDay,
+  DailyPlan,
+  MealType,
+  SelectedMeal,
+} from "../../lib/mealPlan";
+import MealCard from "../../components/MealCard";
 import i18n from "../../locales";
 
-type Day = {
+type Recipe = {
   id: string;
-  labelKey: string;
-};
-
-type Meal = {
-  id: string;
-  type: string;
   title: string;
+  titleEn: string | null;
+  image: string | null;
+  mealType: string;
   calories: number;
-  image: string;
+  protein: number;
+  carbs: number;
+  fat: number;
 };
 
-const DAYS: Day[] = [
-  { id: "mon", labelKey: "days.mon" },
-  { id: "tue", labelKey: "days.tue" },
-  { id: "wed", labelKey: "days.wed" },
-  { id: "thu", labelKey: "days.thu" },
-  { id: "fri", labelKey: "days.fri" },
-  { id: "sat", labelKey: "days.sat" },
-  { id: "sun", labelKey: "days.sun" },
+const MEAL_TYPES: { id: MealType; labelKey: string; icon: string }[] = [
+  { id: "dorucak", labelKey: "plan.breakfast", icon: "🌅" },
+  { id: "uzina", labelKey: "plan.snack", icon: "🍎" },
+  { id: "rucak", labelKey: "plan.lunch", icon: "🍽️" },
+  { id: "vecera", labelKey: "plan.dinner", icon: "🌙" },
 ];
 
-const MEALS_BY_DAY: Record<string, Meal[]> = {
-  mon: [
-    { id: "m1", type: "breakfast", title: "Ovsenka sa bobičastim voćem", calories: 300, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "m2", type: "lunch", title: "Sendvič sa piletinom", calories: 450, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "m3", type: "dinner", title: "Losos sa pečenim povrćem", calories: 600, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-  ],
-  tue: [
-    { id: "t1", type: "breakfast", title: "Jogurt sa granolom", calories: 280, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "t2", type: "lunch", title: "Supa od sočiva", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "t3", type: "dinner", title: "Piletina sa brokolijem", calories: 520, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-  ],
-  wed: [
-    { id: "w1", type: "breakfast", title: "Kajgana sa povrćem", calories: 320, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "w2", type: "lunch", title: "Rižoto sa pečurkama", calories: 480, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "w3", type: "dinner", title: "Smoothie bowl", calories: 350, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-  ],
-  thu: [
-    { id: "th1", type: "breakfast", title: "Tost sa avokadom", calories: 340, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "th2", type: "lunch", title: "Tortilje sa piletinom", calories: 520, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "th3", type: "dinner", title: "Salata sa kinoom", calories: 420, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-  ],
-  fri: [
-    { id: "f1", type: "breakfast", title: "Palačinke od ovsenog brašna", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "f2", type: "lunch", title: "Testenina sa pestom", calories: 540, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "f3", type: "dinner", title: "Pečena piletina sa krompirom", calories: 600, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-  ],
-  sat: [
-    { id: "s1", type: "breakfast", title: "Musli sa jogurtom", calories: 340, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "s2", type: "lunch", title: "Burgers sa crnim pasuljem", calories: 480, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "s3", type: "dinner", title: "Wok sa povrćem i tofujem", calories: 440, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-  ],
-  sun: [
-    { id: "su1", type: "breakfast", title: "Kroasan sa kafom", calories: 380, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "su2", type: "lunch", title: "Nedeljni ručak - sarma", calories: 620, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-    { id: "su3", type: "dinner", title: "Lagana supa", calories: 280, image: "https://placehold.co/112x112/1A1A1A/B3FF47" },
-  ],
-};
-
-const MEAL_TYPES = [
-  { id: "breakfast", labelKey: "plan.breakfast" },
-  { id: "lunch", labelKey: "plan.lunch" },
-  { id: "dinner", labelKey: "plan.dinner" },
-];
+const DAY_LABELS_SR = ["Pon", "Uto", "Sre", "Čet", "Pet", "Sub", "Ned"];
+const DAY_LABELS_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function PlanScreen() {
-  const [selectedDay, setSelectedDay] = useState("mon");
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState<DailyPlan>({
+    dorucak: null,
+    uzina: null,
+    rucak: null,
+    vecera: null,
+  });
+  const [indexes, setIndexes] = useState<Record<MealType, number>>({
+    dorucak: 0,
+    uzina: 0,
+    rucak: 0,
+    vecera: 0,
+  });
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const { profile } = useProfile();
   const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
 
-  const meals = MEALS_BY_DAY[selectedDay] || [];
-  const totalCalories = meals.reduce((sum, m) => sum + m.calories, 0);
+  const weekDays = getWeekDays();
+  const dailyGoal = calculateDailyCalories(profile);
+  const totals = calculateTotal(plan);
+  const selectedCount = countSelected(plan);
+  const remaining = dailyGoal - totals.calories;
+  const percentage =
+    dailyGoal > 0
+      ? Math.min(Math.round((totals.calories / dailyGoal) * 100), 100)
+      : 0;
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAll();
+    }, [])
+  );
+
+  useEffect(() => {
+    loadPlanForDate(selectedDate);
+  }, [selectedDate]);
+
+  async function loadAll() {
+    try {
+      setLoading(true);
+      let data: Recipe[];
+      try {
+        data = await apiGetAuth<Recipe[]>("/recipes/suggestions");
+      } catch {
+        data = await apiGet<Recipe[]>("/recipes");
+      }
+      setRecipes(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadPlanForDate(date: Date) {
+    const saved = await loadPlan(date);
+    setPlan(saved);
+    setIndexes({ dorucak: 0, uzina: 0, rucak: 0, vecera: 0 });
+  }
+
+  function getRecipesForMeal(mealType: MealType): Recipe[] {
+    const selectedIds = MEAL_TYPES.map((m) => plan[m.id]?.id).filter(Boolean);
+    return recipes.filter(
+      (r) =>
+        r.mealType &&
+        r.mealType.toLowerCase() === mealType &&
+        !selectedIds.includes(r.id)
+    );
+  }
+
+  async function handleSelect(mealType: MealType, recipe: Recipe) {
+    const meal: SelectedMeal = {
+      id: recipe.id,
+      title: recipe.title,
+      titleEn: recipe.titleEn,
+      image: recipe.image,
+      calories: recipe.calories,
+      protein: recipe.protein,
+      carbs: recipe.carbs,
+      fat: recipe.fat,
+    };
+    const updated = await setMeal(mealType, meal, selectedDate);
+    setPlan(updated);
+  }
+
+  async function handleRemove(mealType: MealType) {
+    const updated = await setMeal(mealType, null, selectedDate);
+    setPlan(updated);
+  }
+
+  function handleSkip(mealType: MealType, total: number) {
+    setIndexes((prev) => ({
+      ...prev,
+      [mealType]: Math.min(prev[mealType] + 1, Math.max(total - 1, 0)),
+    }));
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator color="#B3FF47" size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const remainingColor = remaining > 0 ? "text-primary" : "text-red-400";
+  const dayLabels = language === "en" ? DAY_LABELS_EN : DAY_LABELS_SR;
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="pt-4 pb-2 px-4 flex-row items-center justify-between">
-        <Text className="text-text text-lg font-bold flex-1 text-center">
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+      <View className="pt-4 pb-2 px-4">
+        <Text className="text-text text-lg font-bold text-center">
           {t("plan.title")}
         </Text>
-        <Pressable className="w-12 h-12 items-center justify-center">
-          <Text className="text-text text-2xl">📅</Text>
-        </Pressable>
-      </View>
-
-      <View className="border-b border-border">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 32 }}
-        >
-          {DAYS.map((day) => {
-            const isActive = selectedDay === day.id;
-            return (
-              <Pressable
-                key={day.id}
-                onPress={() => setSelectedDay(day.id)}
-                className={`pt-4 pb-3 border-b-[3px] ${
-                  isActive ? "border-primary" : "border-transparent"
-                }`}
-              >
-                <Text
-                  className={`text-sm font-bold ${
-                    isActive ? "text-text" : "text-textSecondary"
-                  }`}
-                >
-                  {t(day.labelKey)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 pt-5 pb-3">
-          <Text className="text-text text-sm">
-            {t("plan.total")}:{" "}
-            <Text className="text-primary font-bold">{totalCalories} kcal</Text>
-          </Text>
+        {/* Days tab */}
+        <View className="mb-4">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+          >
+            {weekDays.map((day, i) => {
+              const isActive = isSameDay(day, selectedDate);
+              const isToday = isSameDay(day, new Date());
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => setSelectedDate(day)}
+                  className={`min-w-[56px] px-3 py-3 rounded-2xl items-center border ${
+                    isActive
+                      ? "bg-primary border-primary"
+                      : "bg-surface border-border"
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-bold ${
+                      isActive ? "text-background" : "text-text"
+                    }`}
+                  >
+                    {dayLabels[i]}
+                  </Text>
+                  <Text
+                    className={`text-lg font-bold mt-1 ${
+                      isActive ? "text-background" : "text-text"
+                    }`}
+                  >
+                    {day.getDate()}
+                  </Text>
+                  {isToday && !isActive && (
+                    <View className="w-1.5 h-1.5 rounded-full bg-primary mt-1" />
+                  )}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
 
+        {/* Daily goal summary */}
+        <View className="mx-4 mb-5 bg-surface rounded-3xl p-5 border border-border">
+          <View className="flex-row items-center justify-between mb-4">
+            <View>
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("plan.dailyGoal")}
+              </Text>
+              <Text className="text-text text-2xl font-bold">
+                {totals.calories}{" "}
+                <Text className="text-textSecondary text-base font-normal">
+                  / {dailyGoal} kcal
+                </Text>
+              </Text>
+            </View>
+            <View className="w-14 h-14 rounded-full border-4 border-primary items-center justify-center">
+              <Text className="text-primary text-sm font-bold">
+                {percentage}%
+              </Text>
+            </View>
+          </View>
+
+          <View className="h-2 bg-background rounded-full overflow-hidden mb-4">
+            <View
+              className="h-2 bg-primary rounded-full"
+              style={{ width: `${percentage}%` }}
+            />
+          </View>
+
+          <View className="flex-row justify-between">
+            <View>
+              <Text className="text-textSecondary text-xs mb-1">
+                {remaining >= 0 ? t("plan.remaining") : t("plan.exceeded")}
+              </Text>
+              <Text className={`text-base font-bold ${remainingColor}`}>
+                {Math.abs(remaining)} kcal
+              </Text>
+            </View>
+            <View className="items-end">
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("plan.selected")}
+              </Text>
+              <Text className="text-text text-base font-bold">
+                {selectedCount} / 4
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Meals */}
         {MEAL_TYPES.map((mealType) => {
-          const mealOfType = meals.filter((m) => m.type === mealType.id);
-          if (mealOfType.length === 0) return null;
+          const mealRecipes = getRecipesForMeal(mealType.id);
+          const selected = plan[mealType.id];
+          const currentIndex =
+            indexes[mealType.id] % Math.max(mealRecipes.length, 1);
+          const currentRecipe = mealRecipes[currentIndex];
 
           return (
-            <View key={mealType.id}>
-              <View className="px-4 pt-5 pb-3">
-                <Text className="text-text text-2xl font-bold">
+            <View key={mealType.id} className="mb-6">
+              <View className="px-4 pb-3 flex-row items-center gap-2">
+                <Text className="text-2xl">{mealType.icon}</Text>
+                <Text className="text-text text-xl font-bold">
                   {t(mealType.labelKey)}
                 </Text>
-              </View>
-
-              {mealOfType.map((meal) => (
-                <Pressable
-                  key={meal.id}
-                  onPress={() => router.push(`/meal/${meal.id}`)}
-                  className="px-4 py-2 flex-row items-center gap-4"
-                >
-                  <Image
-                    source={{ uri: meal.image }}
-                    className="w-14 h-14 rounded-lg"
-                  />
-                  <View className="flex-1">
-                    <Text
-                      className="text-text text-base font-medium mb-0.5"
-                      numberOfLines={2}
-                    >
-                      {meal.title}
-                    </Text>
-                    <Text className="text-textSecondary text-sm">
-                      {meal.calories} kcal
+                {selected && (
+                  <View className="ml-auto bg-primary rounded-full px-3 py-1">
+                    <Text className="text-background text-xs font-bold">
+                      ✓ {t("plan.selected")}
                     </Text>
                   </View>
-                </Pressable>
-              ))}
+                )}
+              </View>
+
+              {selected ? (
+                <View className="mx-4 bg-surface border border-primary rounded-3xl p-4">
+                  <View className="flex-row items-center gap-3">
+                    {selected.image ? (
+                      <Image
+                        source={{ uri: selected.image }}
+                        className="w-16 h-16 rounded-2xl"
+                      />
+                    ) : (
+                      <View className="w-16 h-16 rounded-2xl bg-background items-center justify-center">
+                        <Text className="text-3xl">🍽️</Text>
+                      </View>
+                    )}
+                    <Pressable
+                      onPress={() => router.push(`/recipe/${selected.id}`)}
+                      className="flex-1"
+                    >
+                      <Text
+                        className="text-text text-base font-bold mb-1"
+                        numberOfLines={2}
+                      >
+                        {language === "en" && selected.titleEn
+                          ? selected.titleEn
+                          : selected.title}
+                      </Text>
+                      <Text className="text-primary text-sm font-bold">
+                        {Math.round(selected.calories)} kcal
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleRemove(mealType.id)}
+                      className="w-10 h-10 bg-background rounded-full items-center justify-center"
+                    >
+                      <Text className="text-red-400 text-xl">✗</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : !currentRecipe ? (
+                <View className="mx-4 bg-surface rounded-3xl p-6 items-center border border-border">
+                  <Text className="text-textSecondary text-sm text-center">
+                    {t("plan.empty")}
+                  </Text>
+                </View>
+              ) : (
+                <View className="mx-4">
+                  <MealCard
+                    recipe={currentRecipe}
+                    language={language}
+                    hasNext={mealRecipes.length > 1}
+                    currentIndex={currentIndex}
+                    totalCount={mealRecipes.length}
+                    onSelect={() => handleSelect(mealType.id, currentRecipe)}
+                    onSkip={() =>
+                      handleSkip(mealType.id, mealRecipes.length)
+                    }
+                    onPress={() =>
+                      router.push(`/recipe/${currentRecipe.id}`)
+                    }
+                    labels={{
+                      select: t("plan.select"),
+                      skip: t("plan.skip"),
+                    }}
+                  />
+                </View>
+              )}
             </View>
           );
         })}
 
-               <Pressable className="mx-4 mt-6 py-4 rounded-2xl border border-dashed border-border items-center flex-row justify-center gap-2">
-          <Text className="text-textSecondary text-base">+</Text>
-          <Text className="text-textSecondary text-base font-medium">
-            {t("plan.addMeal")}
-          </Text>
-        </Pressable>
+        {selectedCount === 4 && (
+          <View className="mx-4 mb-4 bg-primary/20 border border-primary rounded-2xl p-4">
+            <Text className="text-primary text-base font-bold text-center">
+              🎉 {t("plan.complete")}
+            </Text>
+          </View>
+        )}
 
         <View className="h-32" />
       </ScrollView>

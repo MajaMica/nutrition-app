@@ -1,58 +1,87 @@
 import { useState, useEffect } from "react";
-import { View, Text, ScrollView, Image, Pressable } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useProfile } from "../../hooks/useProfile";
+import { calculateDailyCalories } from "../../lib/calories";
 import { supabase } from "../../lib/supabase";
+import { apiGetAuth, apiGet } from "../../lib/api";
 import i18n from "../../locales";
 
-type SuggestedRecipe = {
+type Recipe = {
   id: string;
   title: string;
+  titleEn: string | null;
+  description: string | null;
+  descriptionEn: string | null;
+  image: string | null;
+  mealType: string;
   calories: number;
-  image: string;
+  isPremium: boolean;
 };
-
-const SUGGESTED: SuggestedRecipe[] = [
-  {
-    id: "1",
-    title: "Mediteranska salata",
-    calories: 350,
-    image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-  },
-  {
-    id: "2",
-    title: "Piletina sa povrćem",
-    calories: 480,
-    image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-  },
-  {
-    id: "3",
-    title: "Smoothie bowl",
-    calories: 280,
-    image: "https://placehold.co/320x426/1A1A1A/B3FF47",
-  },
-];
 
 export default function HomeScreen() {
   const [userName, setUserName] = useState("");
-  const dailyGoal = 1800;
-  const consumed = 1240;
-  const percentage = Math.round((consumed / dailyGoal) * 100);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { profile, loading: profileLoading } = useProfile();
+
+  const dailyGoal = calculateDailyCalories(profile);
+  const consumed = 0;
+  const percentage =
+    dailyGoal > 0
+      ? Math.min(Math.round((consumed / dailyGoal) * 100), 100)
+      : 0;
 
   const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
 
   useEffect(() => {
-    async function loadUser() {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) {
-        const name = (data.user.user_metadata?.name as string) || "Korisnik";
-        setUserName(name.split(" ")[0]);
-      }
-    }
     loadUser();
+    loadRecipes();
   }, []);
+
+  async function loadUser() {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+      const name = (data.user.user_metadata?.name as string) || "Korisnik";
+      setUserName(name.split(" ")[0]);
+    }
+  }
+
+  async function loadRecipes() {
+    try {
+      setLoading(true);
+      let data: Recipe[];
+      try {
+        data = await apiGetAuth<Recipe[]>("/recipes/suggestions");
+      } catch {
+        data = await apiGet<Recipe[]>("/recipes");
+      }
+      setRecipes(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const getTitle = (r: Recipe) =>
+    language === "en" && r.titleEn ? r.titleEn : r.title;
+
+  const nextMeal = recipes[0];
+  const forYou = recipes.slice(0, 6);
+
+  if (loading || profileLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator color="#B3FF47" size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -94,33 +123,48 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View className="px-4 pt-6 pb-3 flex-row items-center justify-between">
-          <Text className="text-text text-xl font-bold">
-            {t("home.nextMeal")}
-          </Text>
-          <Pressable onPress={() => router.push("/plan")}>
-            <Text className="text-primary text-sm font-medium">
-              {t("home.seeAll")}
-            </Text>
-          </Pressable>
-        </View>
+        {nextMeal && (
+          <>
+            <View className="px-4 pt-6 pb-3 flex-row items-center justify-between">
+              <Text className="text-text text-xl font-bold">
+                {t("home.nextMeal")}
+              </Text>
+              <Pressable onPress={() => router.push("/plan")}>
+                <Text className="text-primary text-sm font-medium">
+                  {t("home.seeAll")}
+                </Text>
+              </Pressable>
+            </View>
 
-        <Pressable
-          onPress={() => router.push("/recipe/1")}
-          className="mx-4 bg-surface rounded-2xl p-3 flex-row items-center gap-3 border border-border"
-        >
-          <Image
-            source={{ uri: "https://placehold.co/112x112/1A1A1A/B3FF47" }}
-            className="w-14 h-14 rounded-xl"
-          />
-          <View className="flex-1">
-            <Text className="text-text text-base font-medium mb-0.5">
-              Tost sa avokadom
-            </Text>
-            <Text className="text-textSecondary text-sm">340 kcal</Text>
-          </View>
-          <Text className="text-textSecondary text-lg">›</Text>
-        </Pressable>
+            <Pressable
+              onPress={() => router.push(`/recipe/${nextMeal.id}`)}
+              className="mx-4 bg-surface rounded-2xl p-3 flex-row items-center gap-3 border border-border"
+            >
+              {nextMeal.image ? (
+                <Image
+                  source={{ uri: nextMeal.image }}
+                  className="w-14 h-14 rounded-xl"
+                />
+              ) : (
+                <View className="w-14 h-14 rounded-xl bg-background items-center justify-center">
+                  <Text className="text-2xl">🍽️</Text>
+                </View>
+              )}
+              <View className="flex-1">
+                <Text
+                  className="text-text text-base font-medium mb-0.5"
+                  numberOfLines={1}
+                >
+                  {getTitle(nextMeal)}
+                </Text>
+                <Text className="text-textSecondary text-sm">
+                  {Math.round(nextMeal.calories)} kcal
+                </Text>
+              </View>
+              <Text className="text-textSecondary text-lg">›</Text>
+            </Pressable>
+          </>
+        )}
 
         <View className="px-4 pt-6 pb-3">
           <Text className="text-text text-xl font-bold">
@@ -154,43 +198,60 @@ export default function HomeScreen() {
           <Text className="text-text text-xl font-bold">{t("home.forYou")}</Text>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={170 + 12}
-          decelerationRate="fast"
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            gap: 12,
-            paddingRight: 32,
-          }}
-        >
-          {SUGGESTED.map((recipe) => (
-            <Pressable
-              key={recipe.id}
-              onPress={() => router.push(`/recipe/${recipe.id}`)}
-              style={{ width: 170 }}
-              className="gap-3"
-            >
-              <Image
-                source={{ uri: recipe.image }}
-                style={{ width: "100%", height: 213, borderRadius: 16 }}
-                resizeMode="cover"
-              />
-              <View>
-                <Text
-                  className="text-text text-base font-medium mb-1"
-                  numberOfLines={2}
-                >
-                  {recipe.title}
-                </Text>
-                <Text className="text-textSecondary text-sm">
-                  {recipe.calories} kcal
-                </Text>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
+        {forYou.length === 0 ? (
+          <View className="px-4 py-8 items-center">
+            <Text className="text-textSecondary text-sm text-center">
+              {language === "en" ? "No recipes yet" : "Još nema recepata"}
+            </Text>
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={170 + 12}
+            decelerationRate="fast"
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              gap: 12,
+              paddingRight: 32,
+            }}
+          >
+            {forYou.map((recipe) => (
+              <Pressable
+                key={recipe.id}
+                onPress={() => router.push(`/recipe/${recipe.id}`)}
+                style={{ width: 170 }}
+                className="gap-3"
+              >
+                {recipe.image ? (
+                  <Image
+                    source={{ uri: recipe.image }}
+                    style={{ width: "100%", height: 213, borderRadius: 16 }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    style={{ width: "100%", height: 213, borderRadius: 16 }}
+                    className="bg-surface items-center justify-center"
+                  >
+                    <Text className="text-5xl">🍽️</Text>
+                  </View>
+                )}
+                <View>
+                  <Text
+                    className="text-text text-base font-medium mb-1"
+                    numberOfLines={2}
+                  >
+                    {getTitle(recipe)}
+                  </Text>
+                  <Text className="text-textSecondary text-sm">
+                    {Math.round(recipe.calories)} kcal
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
 
         <View className="px-4 pt-6">
           <Pressable
