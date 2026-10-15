@@ -6,6 +6,7 @@ import { authenticate, requireAdmin, AuthRequest } from './middleware/auth';
 import recipesRouter from './routes/recipes';
 import foodsRouter from './routes/foods';
 import profileRouter from './routes/profile';
+import uploadRouter from './routes/upload';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/recipes', recipesRouter);
 app.use('/foods', foodsRouter);
 app.use('/profile', profileRouter);
+app.use('/upload', uploadRouter);
 
 app.get('/health', async (req, res) => {
   try {

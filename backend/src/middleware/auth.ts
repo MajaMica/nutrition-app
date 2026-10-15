@@ -7,6 +7,7 @@ export type AuthRequest = Request & {
     email: string;
     role: string;
   };
+  file?: Express.Multer.File;
 };
 
 export async function authenticate(

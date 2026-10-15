@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { apiGet, apiPost, apiPut } from "../lib/api";
+import { uploadRecipeImage } from "../lib/uploadImage";
 
 type Food = {
   id: string;
@@ -59,9 +60,11 @@ export default function RecipeForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   const [form, setForm] = useState<RecipeData>({
@@ -142,6 +145,30 @@ export default function RecipeForm() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError("");
+
+    try {
+      const result = await uploadRecipeImage(file);
+      setForm((f) => ({ ...f, image: result.url }));
+    } catch (e: any) {
+      setError(`Upload greska: ${e.message}`);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
+  function removeImage() {
+    setForm((f) => ({ ...f, image: "" }));
   }
 
   function toggleMealType(value: string) {
@@ -339,14 +366,72 @@ export default function RecipeForm() {
 
           <div>
             <label className="text-textSecondary text-xs block mb-2">
-              URL slike
+              Slika recepta
             </label>
+
+            {form.image ? (
+              <div className="space-y-3">
+                <div className="relative w-full max-w-sm">
+                  <img
+                    src={form.image}
+                    alt="Recipe"
+                    className="w-full h-48 object-cover rounded-lg border border-border"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="px-4 py-2 bg-surface border border-border rounded-lg text-text text-sm hover:border-primary disabled:opacity-50"
+                  >
+                    {uploading ? "Upload..." : "Promeni sliku"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="px-4 py-2 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm hover:bg-red-500/30"
+                  >
+                    Ukloni sliku
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full border-2 border-dashed border-border rounded-lg py-8 flex flex-col items-center justify-center hover:border-primary transition-colors disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <>
+                      <div className="text-4xl mb-2">⏳</div>
+                      <span className="text-textSecondary text-sm">
+                        Uploadujem...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-4xl mb-2">📷</div>
+                      <span className="text-text text-sm font-medium">
+                        Klikni da izabereš sliku
+                      </span>
+                      <span className="text-textSecondary text-xs mt-1">
+                        PNG, JPG ili WebP (max 10 MB)
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
             <input
-              type="text"
-              value={form.image}
-              onChange={(e) => setForm({ ...form, image: e.target.value })}
-              placeholder="https://..."
-              className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary"
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              onChange={handleFileChange}
+              className="hidden"
             />
           </div>
 
@@ -626,7 +711,7 @@ export default function RecipeForm() {
         <div className="flex gap-3">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploading}
             className="flex-1 bg-primary text-background font-bold py-4 rounded-xl hover:opacity-90 disabled:opacity-50"
           >
             {loading ? "Cuvanje..." : isEdit ? "Sacuvaj izmene" : "Kreiraj recept"}

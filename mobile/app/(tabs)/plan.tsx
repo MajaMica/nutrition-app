@@ -26,6 +26,7 @@ type Recipe = {
   titleEn: string | null;
   image: string | null;
   mealType: string;
+  mealTypes: string[];
   calories: number;
   protein: number;
   carbs: number;
@@ -106,15 +107,18 @@ export default function PlanScreen() {
     setIndexes({ dorucak: 0, uzina: 0, rucak: 0, vecera: 0 });
   }
 
-  function getRecipesForMeal(mealType: MealType): Recipe[] {
-    const selectedIds = MEAL_TYPES.map((m) => plan[m.id]?.id).filter(Boolean);
-    return recipes.filter(
-      (r) =>
-        r.mealType &&
-        r.mealType.toLowerCase() === mealType &&
-        !selectedIds.includes(r.id)
-    );
-  }
+function getRecipesForMeal(mealType: MealType): Recipe[] {
+  const selectedIds = MEAL_TYPES.map((m) => plan[m.id]?.id).filter(Boolean);
+  return recipes.filter((r) => {
+    if (selectedIds.includes(r.id)) return false;
+
+    if (Array.isArray(r.mealTypes) && r.mealTypes.length > 0) {
+      return r.mealTypes.some((t) => t.toLowerCase() === mealType);
+    }
+
+    return r.mealType && r.mealType.toLowerCase() === mealType;
+  });
+}
 
   async function handleSelect(mealType: MealType, recipe: Recipe) {
     const meal: SelectedMeal = {
