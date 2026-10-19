@@ -10,6 +10,9 @@ type Food = {
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number | null;
+  salt: number | null;
+  saturatedFat: number | null;
   icon: string | null;
 };
 
@@ -286,9 +289,12 @@ export default function RecipeForm() {
       acc.protein += food.protein * factor;
       acc.carbs += food.carbs * factor;
       acc.fat += food.fat * factor;
+      acc.fiber += (food.fiber || 0) * factor;
+      acc.salt += (food.salt || 0) * factor;
+      acc.saturatedFat += (food.saturatedFat || 0) * factor;
       return acc;
     },
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, salt: 0, saturatedFat: 0 }
   );
 
   if (loading && isEdit && !form.title) {
@@ -641,7 +647,7 @@ export default function RecipeForm() {
               <p className="text-textSecondary text-xs mb-2">
                 Ukupno (automatski):
               </p>
-              <div className="flex gap-6 text-sm">
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <span>
                   <span className="text-primary font-bold">
                     {Math.round(totalNutrition.calories)}
@@ -651,6 +657,9 @@ export default function RecipeForm() {
                 <span>P: {Math.round(totalNutrition.protein)}g</span>
                 <span>UH: {Math.round(totalNutrition.carbs)}g</span>
                 <span>M: {Math.round(totalNutrition.fat)}g</span>
+                <span>Vlakna: {totalNutrition.fiber.toFixed(1)}g</span>
+                <span>So: {totalNutrition.salt.toFixed(1)}g</span>
+                <span>Zasić. masti: {totalNutrition.saturatedFat.toFixed(1)}g</span>
               </div>
             </div>
           )}

@@ -171,6 +171,9 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
         protein: nutrition.protein,
         carbs: nutrition.carbs,
         fat: nutrition.fat,
+        fiber: nutrition.fiber,
+        salt: nutrition.salt,
+        saturatedFat: nutrition.saturatedFat,
         ingredients: {
           create: ingredients.map((ing: any) => ({
             foodId: ing.foodId,
@@ -264,6 +267,9 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => 
           protein: nutrition.protein,
           carbs: nutrition.carbs,
           fat: nutrition.fat,
+          fiber: nutrition.fiber,
+          salt: nutrition.salt,
+          saturatedFat: nutrition.saturatedFat,
         }),
         ...(ingredients && {
           ingredients: {
@@ -310,6 +316,9 @@ async function calculateNutrition(ingredients: any[]) {
   let protein = 0;
   let carbs = 0;
   let fat = 0;
+  let fiber = 0;
+  let salt = 0;
+  let saturatedFat = 0;
 
   for (const ing of ingredients) {
     const food = await prisma.food.findUnique({ where: { id: ing.foodId } });
@@ -325,6 +334,9 @@ async function calculateNutrition(ingredients: any[]) {
     protein += food.protein * factor;
     carbs += food.carbs * factor;
     fat += food.fat * factor;
+    if (food.fiber) fiber += food.fiber * factor;
+    if (food.salt) salt += food.salt * factor;
+    if (food.saturatedFat) saturatedFat += food.saturatedFat * factor;
   }
 
   return {
@@ -332,6 +344,9 @@ async function calculateNutrition(ingredients: any[]) {
     protein: Math.round(protein * 10) / 10,
     carbs: Math.round(carbs * 10) / 10,
     fat: Math.round(fat * 10) / 10,
+    fiber: Math.round(fiber * 10) / 10,
+    salt: Math.round(salt * 10) / 10,
+    saturatedFat: Math.round(saturatedFat * 10) / 10,
   };
 }
 

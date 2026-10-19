@@ -48,6 +48,8 @@ router.post("/", authenticate, requireAdmin, async (req: AuthRequest, res) => {
       fat,
       fiber,
       sugar,
+      salt,
+      saturatedFat,
       icon,
     } = req.body;
 
@@ -66,8 +68,10 @@ router.post("/", authenticate, requireAdmin, async (req: AuthRequest, res) => {
         protein: Number(protein) || 0,
         carbs: Number(carbs) || 0,
         fat: Number(fat) || 0,
-        fiber: fiber !== undefined ? Number(fiber) : null,
-        sugar: sugar !== undefined ? Number(sugar) : null,
+        fiber: fiber !== undefined && fiber !== "" ? Number(fiber) : null,
+        sugar: sugar !== undefined && sugar !== "" ? Number(sugar) : null,
+        salt: salt !== undefined && salt !== "" ? Number(salt) : null,
+        saturatedFat: saturatedFat !== undefined && saturatedFat !== "" ? Number(saturatedFat) : null,
         icon: icon || null,
       },
     });
@@ -91,6 +95,8 @@ router.put("/:id", authenticate, requireAdmin, async (req: AuthRequest, res) => 
       fat,
       fiber,
       sugar,
+      salt,
+      saturatedFat,
       icon,
     } = req.body;
 
@@ -109,6 +115,12 @@ router.put("/:id", authenticate, requireAdmin, async (req: AuthRequest, res) => 
         }),
         ...(sugar !== undefined && {
           sugar: sugar === "" ? null : Number(sugar),
+        }),
+        ...(salt !== undefined && {
+          salt: salt === "" ? null : Number(salt),
+        }),
+        ...(saturatedFat !== undefined && {
+          saturatedFat: saturatedFat === "" ? null : Number(saturatedFat),
         }),
         ...(icon !== undefined && { icon: icon || null }),
       },

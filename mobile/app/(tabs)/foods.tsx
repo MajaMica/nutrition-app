@@ -15,6 +15,7 @@ type Category = {
 type Food = {
   id: string;
   name: string;
+  nameEn: string | null;
   category: string;
   calories: number;
   icon: string | null;
@@ -25,6 +26,7 @@ const CATEGORIES: Category[] = [
   { id: "dairy", labelKey: "foods.dairy", icon: "🧀" },
   { id: "meat", labelKey: "foods.meat", icon: "🥩" },
   { id: "fish", labelKey: "foods.fish", icon: "🐟" },
+  { id: "seafood", labelKey: "foods.seafood", icon: "🦐" },
   { id: "veggies", labelKey: "foods.veggies", icon: "🥕" },
   { id: "fruits", labelKey: "foods.fruits", icon: "🍎" },
   { id: "grains", labelKey: "foods.grains", icon: "🌾" },
@@ -157,8 +159,8 @@ export default function FoodsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-text text-base font-medium mb-0.5">
-  {language === "en" && food.nameEn ? food.nameEn : food.name}
-</Text>
+                  {language === "en" && food.nameEn ? food.nameEn : food.name}
+                </Text>
                 <Text className="text-textSecondary text-sm">
                   {food.calories} kcal / 100g
                 </Text>

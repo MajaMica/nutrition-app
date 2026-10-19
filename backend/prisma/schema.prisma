@@ -19,6 +19,8 @@ model Food {
   fat         Float
   fiber       Float?
   sugar       Float?
+  salt        Float?   
+  saturatedFat Float?  @map("saturated_fat") 
   icon        String?
   allergens   String[] @default([])
   createdAt   DateTime @default(now()) @map("created_at")
@@ -38,9 +40,9 @@ model Recipe {
   descriptionEn String?  @map("description_en")
   image         String?
   mealType      String   @map("meal_type")
-mealTypes     String[] @default([]) @map("meal_types")
-dietType      String?  @map("diet_type")
-dietTypes     String[] @default([]) @map("diet_types")
+  mealTypes     String[] @default([]) @map("meal_types")
+  dietType      String?  @map("diet_type")
+  dietTypes     String[] @default([]) @map("diet_types")
   difficulty    String?
   prepTime      Int?     @map("prep_time")
   servings      Int      @default(1)
@@ -48,6 +50,9 @@ dietTypes     String[] @default([]) @map("diet_types")
   protein       Float    @default(0)
   carbs         Float    @default(0)
   fat           Float    @default(0)
+  fiber         Float    @default(0) 
+  salt          Float    @default(0) 
+  saturatedFat  Float    @default(0) @map("saturated_fat") 
   isPremium     Boolean  @default(false) @map("is_premium")
   isPublished   Boolean  @default(true) @map("is_published")
   ingredients   RecipeIngredient[]
@@ -83,6 +88,7 @@ model RecipeStep {
 
   @@map("recipe_steps")
 }
+
 model User {
   id              String   @id
   email           String   @unique
@@ -93,7 +99,7 @@ model User {
   weight          Float?
   targetWeight    Float?   @map("target_weight")
   activityLevel   String?  @map("activity_level")
-    goal            String?
+  goal            String?
   dietType        String?  @map("diet_type")
   allergies       String[] @default([])
   dislikedFoods   String[] @default([]) @map("disliked_foods")

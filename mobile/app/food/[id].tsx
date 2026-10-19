@@ -18,6 +18,8 @@ type Food = {
   fat: number;
   fiber: number | null;
   sugar: number | null;
+  salt: number | null;
+  saturatedFat: number | null;
 };
 
 const SERVING_UNITS = [
@@ -97,6 +99,9 @@ export default function FoodDetailScreen() {
 
   const calc = (value: number | null) =>
     value != null ? (value * factor).toFixed(1) : "0.0";
+
+  const calcSalt = (value: number | null) =>
+    value != null ? (value * factor).toFixed(2) : "0.00";
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -210,7 +215,7 @@ export default function FoodDetailScreen() {
             </View>
           </View>
 
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-3 mb-3">
             <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-textSecondary text-xs mb-1">
                 {t("food.fiber")}
@@ -228,18 +233,39 @@ export default function FoodDetailScreen() {
               </Text>
             </View>
           </View>
+
+          <View className="flex-row gap-3">
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("food.salt")}
+              </Text>
+              <Text className="text-text text-base font-bold">
+                {calcSalt(food.salt)}g
+              </Text>
+            </View>
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
+              <Text className="text-textSecondary text-xs mb-1" numberOfLines={1}>
+                {t("food.saturatedFat")}
+              </Text>
+              <Text className="text-text text-base font-bold">
+                {calc(food.saturatedFat)}g
+              </Text>
+            </View>
+          </View>
         </View>
 
         <View className="h-4" />
       </ScrollView>
 
-      <View className="px-4 py-3 border-t border-border">
-        <Pressable className="bg-primary py-4 rounded-2xl items-center">
-          <Text className="text-background text-base font-bold">
-            {t("food.addToMeal")}
-          </Text>
-        </Pressable>
-      </View>
+      <SafeAreaView edges={["bottom"]} className="bg-background border-t border-border">
+        <View className="px-4 py-3">
+          <Pressable className="bg-primary py-4 rounded-2xl items-center">
+            <Text className="text-background text-base font-bold">
+              {t("food.addToMeal")}
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }

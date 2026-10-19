@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useProfile } from "../../hooks/useProfile";
 import { calculateDailyCalories } from "../../lib/calories";
@@ -25,40 +26,52 @@ type Recipe = {
 export default function HomeScreen() {
   const [userName, setUserName] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { profile, loading: profileLoading } = useProfile();
-const [consumed, setConsumed] = useState(0);
+  const [consumed, setConsumed] = useState(0);
 
-const dailyGoal = calculateDailyCalories(profile);
-const percentage =
-  dailyGoal > 0
-    ? Math.min(Math.round((consumed / dailyGoal) * 100), 100)
-    : 0;
+  const dailyGoal = calculateDailyCalories(profile);
+  const percentage =
+    dailyGoal > 0
+      ? Math.min(Math.round((consumed / dailyGoal) * 100), 100)
+      : 0;
 
   const { language } = useLanguage();
   const t = (key: string) => i18n.t(key);
 
   useEffect(() => {
-  loadUser();
-  loadRecipes();
-}, []);
+    loadUser();
+    loadRecipes();
+  }, []);
 
-// Ucitaj izabrane obroke iz Plana kad se ekran fokusira
-useFocusEffect(
-  useCallback(() => {
-    loadConsumed();
-  }, [])
-);
+  useFocusEffect(
+    useCallback(() => {
+      loadConsumed();
+      loadFavorites();
+    }, [])
+  );
 
-async function loadConsumed() {
-  try {
-    const plan = await loadPlan();
-    const totals = calculateTotal(plan);
-    setConsumed(totals.calories);
-  } catch {
-    setConsumed(0);
+  async function loadConsumed() {
+    try {
+      const plan = await loadPlan();
+      const totals = calculateTotal(plan);
+      setConsumed(totals.calories);
+    } catch {
+      setConsumed(0);
+    }
   }
-}
+
+  async function loadFavorites() {
+    try {
+      const raw = await AsyncStorage.getItem("favorite_recipes");
+      if (raw) {
+        setFavoriteIds(JSON.parse(raw));
+      } else {
+        setFavoriteIds([]);
+      }
+    } catch {}
+  }
 
   async function loadUser() {
     const { data } = await supabase.auth.getUser();
@@ -74,6 +87,12 @@ async function loadConsumed() {
       let data: Recipe[];
       try {
         data = await apiGetAuth<Recipe[]>("/recipes/suggestions");
+        if (data.length < 20) {
+          const allData = await apiGet<Recipe[]>("/recipes");
+          const existingIds = new Set(data.map(r => r.id));
+          const missing = allData.filter(r => !existingIds.has(r.id));
+          data = [...data, ...missing];
+        }
       } catch {
         data = await apiGet<Recipe[]>("/recipes");
       }
@@ -90,6 +109,8 @@ async function loadConsumed() {
 
   const nextMeal = recipes[0];
   const forYou = recipes.slice(0, 6);
+  
+  const favoriteRecipes = recipes.filter(r => favoriteIds.includes(r.id));
 
   if (loading || profileLoading) {
     return (
@@ -212,6 +233,67 @@ async function loadConsumed() {
           </Pressable>
         </View>
 
+        {favoriteRecipes.length > 0 && (
+          <>
+            <View className="px-4 pt-6 pb-3 flex-row items-center justify-between">
+              <Text className="text-text text-xl font-bold">
+                {t("home.favorites")}
+              </Text>
+              <Pressable onPress={() => router.push("/favorites")}>
+                <Text className="text-primary text-sm font-medium">
+                  {t("home.seeAll")}
+                </Text>
+              </Pressable>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={150 + 12}
+              decelerationRate="fast"
+              contentContainerStyle={{
+                paddingHorizontal: 16,
+                gap: 12,
+                paddingRight: 32,
+              }}
+            >
+              {favoriteRecipes.map((recipe) => (
+                <Pressable
+                  key={recipe.id}
+                  onPress={() => router.push(`/recipe/${recipe.id}`)}
+                  style={{ width: 150 }}
+                  className="gap-2"
+                >
+                  {recipe.image ? (
+                    <Image
+                      source={{ uri: recipe.image }}
+                      style={{ width: "100%", height: 150, borderRadius: 16 }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View
+                      style={{ width: "100%", height: 150, borderRadius: 16 }}
+                      className="bg-surface items-center justify-center"
+                    >
+                      <Text className="text-4xl">🍽️</Text>
+                    </View>
+                  )}
+                  <View>
+                    <Text
+                      className="text-text text-sm font-medium mb-1"
+                      numberOfLines={2}
+                    >
+                      {getTitle(recipe)}
+                    </Text>
+                    <Text className="text-textSecondary text-xs">
+                      {Math.round(recipe.calories)} kcal
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
         <View className="px-4 pt-6 pb-3">
           <Text className="text-text text-xl font-bold">{t("home.forYou")}</Text>
         </View>
@@ -270,6 +352,26 @@ async function loadConsumed() {
             ))}
           </ScrollView>
         )}
+        
+        <View className="px-4 pt-6">
+          <Pressable
+            onPress={() => router.push("/custom-recipe")}
+            className="bg-surface rounded-2xl p-6 border border-primary items-center"
+          >
+            <Text className="text-5xl mb-3">👨‍🍳</Text>
+            <Text className="text-text text-lg font-bold text-center mb-1">
+              {t("home.customRecipeTitle")}
+            </Text>
+            <Text className="text-textSecondary text-sm text-center mb-4">
+              {t("home.customRecipeDesc")}
+            </Text>
+            <View className="bg-primary px-6 py-2.5 rounded-full">
+              <Text className="text-background font-bold text-sm">
+                {t("home.customRecipeBtn")}
+              </Text>
+            </View>
+          </Pressable>
+        </View>
 
         <View className="px-4 pt-6">
           <Pressable

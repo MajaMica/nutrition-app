@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, Image, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useProfile } from "../../hooks/useProfile";
 import { calculateDailyCalories } from "../../lib/calories";
@@ -59,6 +60,19 @@ export default function PlanScreen() {
     vecera: 0,
   });
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [userTier, setUserTier] = useState("free");
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAll();
+      loadTier();
+    }, [])
+  );
+
+  async function loadTier() {
+    const tier = await AsyncStorage.getItem("@user_tier");
+    setUserTier(tier || "free");
+  }
 
   const { profile } = useProfile();
   const { language } = useLanguage();
@@ -74,11 +88,6 @@ export default function PlanScreen() {
       ? Math.min(Math.round((totals.calories / dailyGoal) * 100), 100)
       : 0;
 
-  useFocusEffect(
-    useCallback(() => {
-      loadAll();
-    }, [])
-  );
 
   useEffect(() => {
     loadPlanForDate(selectedDate);
@@ -121,6 +130,10 @@ function getRecipesForMeal(mealType: MealType): Recipe[] {
 }
 
   async function handleSelect(mealType: MealType, recipe: Recipe) {
+    if (userTier === "free" && selectedCount >= 1) {
+      router.push("/paywall");
+      return;
+    }
     const meal: SelectedMeal = {
       id: recipe.id,
       title: recipe.title,
@@ -169,7 +182,6 @@ function getRecipesForMeal(mealType: MealType): Recipe[] {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Days tab */}
         <View className="mb-4">
           <ScrollView
             horizontal
@@ -212,7 +224,6 @@ function getRecipesForMeal(mealType: MealType): Recipe[] {
           </ScrollView>
         </View>
 
-        {/* Daily goal summary */}
         <View className="mx-4 mb-5 bg-surface rounded-3xl p-5 border border-border">
           <View className="flex-row items-center justify-between mb-4">
             <View>
@@ -260,7 +271,6 @@ function getRecipesForMeal(mealType: MealType): Recipe[] {
           </View>
         </View>
 
-        {/* Meals */}
         {MEAL_TYPES.map((mealType) => {
           const mealRecipes = getRecipesForMeal(mealType.id);
           const selected = plan[mealType.id];
@@ -353,15 +363,39 @@ function getRecipesForMeal(mealType: MealType): Recipe[] {
           );
         })}
 
-        {selectedCount === 4 && (
-          <View className="mx-4 mb-4 bg-primary/20 border border-primary rounded-2xl p-4">
-            <Text className="text-primary text-base font-bold text-center">
-              🎉 {t("plan.complete")}
+        {selectedCount === 4 ? (
+          <View className="mx-4 mb-4 bg-primary/10 border border-primary rounded-3xl p-6 items-center">
+            <Text className="text-4xl mb-3">🏆</Text>
+            <Text className="text-primary text-lg font-bold text-center mb-1">
+              {language === "en" ? "Your menu is complete!" : "Tvoj meni je kompletan!"}
             </Text>
+            <Text className="text-textSecondary text-sm text-center">
+              {language === "en" ? "All meals are selected. Enjoy the flavors!" : "Svi obroci su izabrani. Uživaj u ukusima!"}
+            </Text>
+          </View>
+        ) : (
+          <View className="px-4 pt-4 pb-8">
+            <Pressable
+              onPress={() => router.push("/custom-recipe")}
+              className="bg-surface rounded-2xl p-6 border border-primary items-center"
+            >
+              <Text className="text-5xl mb-3">👨‍🍳</Text>
+              <Text className="text-text text-lg font-bold text-center mb-1">
+                {t("home.customRecipeTitle")}
+              </Text>
+              <Text className="text-textSecondary text-sm text-center mb-4">
+                {t("home.customRecipeDesc")}
+              </Text>
+              <View className="bg-primary px-6 py-2.5 rounded-full">
+                <Text className="text-background font-bold text-sm">
+                  {t("home.customRecipeBtn")}
+                </Text>
+              </View>
+            </Pressable>
           </View>
         )}
 
-        <View className="h-32" />
+        <View className="h-8" />
       </ScrollView>
     </SafeAreaView>
   );

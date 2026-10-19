@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { usePreventScreenCapture } from "expo-screen-capture";
 import { OnboardingProvider } from "../contexts/OnboardingContext";
 import { LanguageProvider } from "../contexts/LanguageContext";
 import { ThemeProvider, useTheme, themeStyles } from "../contexts/ThemeContext";
@@ -19,6 +20,8 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  usePreventScreenCapture();
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

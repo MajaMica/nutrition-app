@@ -12,17 +12,25 @@ type FoodData = {
   fat: number | "";
   fiber: number | "";
   sugar: number | "";
+  salt: number | "";
+  saturatedFat: number | "";
   icon: string;
 };
 
 const CATEGORIES = [
   "dairy",
   "meat",
+  "fish",
+  "seafood",
   "veggies",
   "fruits",
   "grains",
   "legumes",
+  "nuts",
   "oils",
+  "sweets",
+  "drinks",
+  "traditional",
 ];
 
 export default function FoodForm() {
@@ -43,6 +51,8 @@ export default function FoodForm() {
     fat: "",
     fiber: "",
     sugar: "",
+    salt: "",
+    saturatedFat: "",
     icon: "",
   });
 
@@ -64,6 +74,8 @@ export default function FoodForm() {
         fat: data.fat ?? "",
         fiber: data.fiber ?? "",
         sugar: data.sugar ?? "",
+        salt: data.salt ?? "",
+        saturatedFat: data.saturatedFat ?? "",
         icon: data.icon || "",
       });
     } catch (e: any) {
@@ -89,6 +101,8 @@ export default function FoodForm() {
         fat: Number(form.fat) || 0,
         fiber: form.fiber === "" ? null : Number(form.fiber),
         sugar: form.sugar === "" ? null : Number(form.sugar),
+        salt: form.salt === "" ? null : Number(form.salt),
+        saturatedFat: form.saturatedFat === "" ? null : Number(form.saturatedFat),
         icon: form.icon || null,
       };
 
@@ -282,6 +296,40 @@ export default function FoodForm() {
                   setForm({
                     ...form,
                     sugar: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="text-text-secondary text-xs block mb-2">
+                So (g)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={form.salt}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    salt: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="text-text-secondary text-xs block mb-2">
+                Zasićene masti (g)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                value={form.saturatedFat}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    saturatedFat: e.target.value === "" ? "" : Number(e.target.value),
                   })
                 }
                 className="w-full bg-background border border-border rounded-lg px-4 py-3 text-white outline-none focus:border-primary"
