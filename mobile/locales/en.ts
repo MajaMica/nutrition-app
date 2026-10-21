@@ -183,6 +183,7 @@ export default {
     fiber: "Fiber",
     salt: "Salt",
     saturatedFat: "Saturated fat",
+    sugar: "Sugars",
     save: "Save recipe",
     share: "Share",
     notFound: "Recipe not found",

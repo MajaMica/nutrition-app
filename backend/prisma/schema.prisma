@@ -51,6 +51,7 @@ model Recipe {
   carbs         Float    @default(0)
   fat           Float    @default(0)
   fiber         Float    @default(0) 
+  sugar         Float    @default(0)
   salt          Float    @default(0) 
   saturatedFat  Float    @default(0) @map("saturated_fat") 
   isPremium     Boolean  @default(false) @map("is_premium")

@@ -182,6 +182,7 @@ export default {
     fiber: "Vlakna",
     salt: "So",
     saturatedFat: "Zasićene masti",
+    sugar: "Šećeri",
     save: "Sačuvaj recept",
     share: "Podeli",
     notFound: "Recept nije pronađen",

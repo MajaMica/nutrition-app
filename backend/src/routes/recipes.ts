@@ -174,6 +174,7 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res) => {
         fiber: nutrition.fiber,
         salt: nutrition.salt,
         saturatedFat: nutrition.saturatedFat,
+        sugar: nutrition.sugar,
         ingredients: {
           create: ingredients.map((ing: any) => ({
             foodId: ing.foodId,
@@ -270,6 +271,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res) => 
           fiber: nutrition.fiber,
           salt: nutrition.salt,
           saturatedFat: nutrition.saturatedFat,
+         sugar: nutrition.sugar,
         }),
         ...(ingredients && {
           ingredients: {
@@ -317,6 +319,7 @@ async function calculateNutrition(ingredients: any[]) {
   let carbs = 0;
   let fat = 0;
   let fiber = 0;
+  let sugar = 0;
   let salt = 0;
   let saturatedFat = 0;
 
@@ -337,6 +340,7 @@ async function calculateNutrition(ingredients: any[]) {
     if (food.fiber) fiber += food.fiber * factor;
     if (food.salt) salt += food.salt * factor;
     if (food.saturatedFat) saturatedFat += food.saturatedFat * factor;
+    if (food.sugar) sugar += food.sugar * factor;
   }
 
   return {
@@ -347,6 +351,7 @@ async function calculateNutrition(ingredients: any[]) {
     fiber: Math.round(fiber * 10) / 10,
     salt: Math.round(salt * 10) / 10,
     saturatedFat: Math.round(saturatedFat * 10) / 10,
+    sugar: Math.round(sugar * 10) / 10,
   };
 }
 

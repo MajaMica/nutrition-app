@@ -10,6 +10,7 @@ type Food = {
   protein: number;
   carbs: number;
   fat: number;
+  sugar: number | null;
   fiber: number | null;
   salt: number | null;
   saturatedFat: number | null;
@@ -292,9 +293,10 @@ export default function RecipeForm() {
       acc.fiber += (food.fiber || 0) * factor;
       acc.salt += (food.salt || 0) * factor;
       acc.saturatedFat += (food.saturatedFat || 0) * factor;
+      acc.sugar += (food.sugar || 0) * factor;
       return acc;
     },
-    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, salt: 0, saturatedFat: 0 }
+        { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, salt: 0, saturatedFat: 0, sugar: 0 }
   );
 
   if (loading && isEdit && !form.title) {
@@ -660,6 +662,7 @@ export default function RecipeForm() {
                 <span>Vlakna: {totalNutrition.fiber.toFixed(1)}g</span>
                 <span>So: {totalNutrition.salt.toFixed(1)}g</span>
                 <span>Zasić. masti: {totalNutrition.saturatedFat.toFixed(1)}g</span>
+                <span>Šećeri: {totalNutrition.sugar.toFixed(1)}g</span>
               </div>
             </div>
           )}

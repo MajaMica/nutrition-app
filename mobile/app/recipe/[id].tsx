@@ -52,6 +52,7 @@ type Recipe = {
   fiber: number | null;
   salt: number | null;
   saturatedFat: number | null;
+  sugar: number | null;
   isPremium: boolean;
   ingredients: Ingredient[];
   steps: Step[];
@@ -241,6 +242,7 @@ export default function RecipeDetailScreen() {
   const totalFiber = (recipe.fiber || 0) * servingsRatio;
   const totalSalt = (recipe.salt || 0) * servingsRatio;
   const totalSaturatedFat = (recipe.saturatedFat || 0) * servingsRatio;
+  const totalSugar = (recipe.sugar || 0) * servingsRatio;
 
   const displayTitle =
     language === "en" && recipe.titleEn ? recipe.titleEn : recipe.title;
@@ -470,17 +472,27 @@ export default function RecipeDetailScreen() {
               </Text>
             </View>
           </View>
-
-          <View className="flex-row gap-3">
-            <View className="flex-1 bg-surface rounded-2xl p-3 border border-border">
-              <Text className="text-textSecondary text-xs mb-1" numberOfLines={1}>
+          <View className="flex-row gap-3 mb-3">
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
+              <Text className="text-textSecondary text-xs mb-1">
                 {t("recipe.fiber")}
               </Text>
               <Text className="text-text text-lg font-bold">
                 {Math.round(totalFiber * 10) / 10}g
               </Text>
             </View>
-            <View className="flex-1 bg-surface rounded-2xl p-3 border border-border">
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
+              <Text className="text-textSecondary text-xs mb-1">
+                {t("recipe.sugar")}
+              </Text>
+              <Text className="text-text text-lg font-bold">
+                {Math.round(totalSugar * 10) / 10}g
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row gap-3">
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-textSecondary text-xs mb-1" numberOfLines={1}>
                 {t("recipe.salt")}
               </Text>
@@ -488,7 +500,7 @@ export default function RecipeDetailScreen() {
                 {Math.round(totalSalt * 100) / 100}g
               </Text>
             </View>
-            <View className="flex-1 bg-surface rounded-2xl p-3 border border-border">
+            <View className="flex-1 bg-surface rounded-2xl p-4 border border-border">
               <Text className="text-textSecondary text-xs mb-1" numberOfLines={1}>
                 {t("recipe.saturatedFat")}
               </Text>
