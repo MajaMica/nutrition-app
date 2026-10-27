@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLanguage } from "../contexts/LanguageContext";
 import { apiGet } from "../lib/api";
@@ -27,6 +27,8 @@ type Food = {
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number | null;
+  sugar: number | null;
 };
 
 type CustomIngredient = {
@@ -76,12 +78,15 @@ export default function CustomRecipeScreen() {
   const [overwriteWarningVisible, setOverwriteWarningVisible] = useState(false);
 
   const { language } = useLanguage();
+  const { foodId, grams } = useLocalSearchParams();
   const t = (key: string) => i18n.t(key);
 
   const weekDays = getWeekDays();
   const dayLabels = language === "en" ? DAY_LABELS_EN : DAY_LABELS_SR;
 
-   useEffect(() => {
+  const hasAddedInitialFood = useRef(false);
+
+  useEffect(() => {
     async function loadData() {
       try {
         const tier = await AsyncStorage.getItem("@user_tier");
@@ -97,6 +102,27 @@ export default function CustomRecipeScreen() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (foodId && allFoods.length > 0 && !hasAddedInitialFood.current) {
+      const foodToAdd = allFoods.find((f) => f.id === foodId);
+      if (foodToAdd) {
+        const parsedAmount = parseFloat(grams as string) || 100;
+        
+        setIngredients((prev) => {
+          const existing = prev.find((i) => i.food.id === foodToAdd.id);
+          if (existing) {
+            return prev.map((i) =>
+              i.food.id === foodToAdd.id ? { ...i, amount: i.amount + parsedAmount } : i
+            );
+          }
+          return [...prev, { food: foodToAdd, amount: parsedAmount }];
+        });
+
+        hasAddedInitialFood.current = true;
+      }
+    }
+  }, [foodId, allFoods, grams]);
 
   const addIngredient = (food: Food) => {
     const existing = ingredients.find((i) => i.food.id === food.id);
@@ -132,9 +158,11 @@ export default function CustomRecipeScreen() {
       acc.protein += item.food.protein * factor;
       acc.carbs += item.food.carbs * factor;
       acc.fat += item.food.fat * factor;
+      acc.fiber += (item.food.fiber || 0) * factor;
+      acc.sugar += (item.food.sugar || 0) * factor;
       return acc;
     },
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 }
   );
 
   const filteredFoods = allFoods.filter((f) => {
@@ -356,27 +384,40 @@ export default function CustomRecipeScreen() {
           )}
         </ScrollView>
 
-        {/* OVDE JE IZMENA: Umotali smo donji deo u SafeAreaView edges={["bottom"]} */}
         <SafeAreaView edges={["bottom"]} className="bg-surface border-t border-border">
           <View className="p-4">
-            <View className="flex-row justify-between mb-4">
-              <View className="items-center">
-                <Text className="text-textSecondary text-xs mb-1">Kalorije</Text>
-                <Text className="text-primary font-bold">{Math.round(totals.calories)}</Text>
+            <View className="mb-4 gap-2">
+              <View className="flex-row gap-2">
+                <View className="flex-1 bg-background rounded-xl p-2 items-center border border-border">
+                  <Text className="text-textSecondary text-[10px] mb-0.5">Kalorije</Text>
+                  <Text className="text-primary font-bold text-sm">{Math.round(totals.calories)}</Text>
+                </View>
+                <View className="flex-1 bg-background rounded-xl p-2 items-center border border-border">
+                  <Text className="text-textSecondary text-[10px] mb-0.5">Proteini</Text>
+                  <Text className="text-text font-bold text-sm">{Math.round(totals.protein)}g</Text>
+                </View>
+                <View className="flex-1 bg-background rounded-xl p-2 items-center border border-border">
+                  <Text className="text-textSecondary text-[10px] mb-0.5">UH</Text>
+                  <Text className="text-text font-bold text-sm">{Math.round(totals.carbs)}g</Text>
+                </View>
               </View>
-              <View className="items-center">
-                <Text className="text-textSecondary text-xs mb-1">P</Text>
-                <Text className="text-text font-bold">{Math.round(totals.protein)}g</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-textSecondary text-xs mb-1">UH</Text>
-                <Text className="text-text font-bold">{Math.round(totals.carbs)}g</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-textSecondary text-xs mb-1">M</Text>
-                <Text className="text-text font-bold">{Math.round(totals.fat)}g</Text>
+
+              <View className="flex-row gap-2">
+                <View className="flex-1 bg-background rounded-xl p-2 items-center border border-border">
+                  <Text className="text-textSecondary text-[10px] mb-0.5">Masti</Text>
+                  <Text className="text-text font-bold text-sm">{Math.round(totals.fat)}g</Text>
+                </View>
+                <View className="flex-1 bg-background rounded-xl p-2 items-center border border-border">
+                  <Text className="text-textSecondary text-[10px] mb-0.5">Vlakna</Text>
+                  <Text className="text-text font-bold text-sm">{Math.round(totals.fiber)}g</Text>
+                </View>
+                <View className="flex-1 bg-background rounded-xl p-2 items-center border border-border">
+                  <Text className="text-textSecondary text-[10px] mb-0.5">Šećeri</Text>
+                  <Text className="text-text font-bold text-sm">{Math.round(totals.sugar)}g</Text>
+                </View>
               </View>
             </View>
+            
             <Pressable
               onPress={() => setModalVisible(true)}
               className={`py-4 rounded-full items-center ${

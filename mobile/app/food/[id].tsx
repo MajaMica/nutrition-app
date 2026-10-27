@@ -257,9 +257,18 @@ export default function FoodDetailScreen() {
         <View className="h-4" />
       </ScrollView>
 
-      <SafeAreaView edges={["bottom"]} className="bg-background border-t border-border">
+          <SafeAreaView edges={["bottom"]} className="bg-background border-t border-border">
         <View className="px-4 py-3">
-          <Pressable className="bg-primary py-4 rounded-2xl items-center">
+          <Pressable
+            onPress={() => {
+              const gramsAmount = (parseFloat(amount) || 0) * selectedUnit.multiplier;
+              router.push({
+                pathname: "/custom-recipe",
+                params: { foodId: food.id, grams: gramsAmount }
+              });
+            }}
+            className="bg-primary py-4 rounded-2xl items-center"
+          >
             <Text className="text-background text-base font-bold">
               {t("food.addToMeal")}
             </Text>

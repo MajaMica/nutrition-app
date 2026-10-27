@@ -40,6 +40,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#0D0D0D"
         }
+      ],
+      [
+        "react-native-capture-protection",
+        {
+          "captureType": "fullMediaCapture"
+        }
       ]
     ],
     "extra": {

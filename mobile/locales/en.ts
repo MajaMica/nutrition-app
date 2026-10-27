@@ -199,6 +199,7 @@ export default {
     selectDay: "Select day",
     selectMeal: "Select meal",
     confirm: "Confirm",
+    addedFor: "Added for",
   },
  plan: {
   title: "Meal Plan",

@@ -514,20 +514,22 @@ export default function RecipeDetailScreen() {
         <View className="h-4" />
       </ScrollView>
 
-      <View className="px-4 py-3 border-t border-border">
-        <Pressable
-          onPress={() => setModalVisible(true)}
-          className={`py-4 rounded-full items-center border ${
-            addedMessage 
-              ? "bg-surface border-primary" 
-              : "bg-primary border-primary"
-          }`}
-        >
-          <Text className={`text-base font-bold ${addedMessage ? "text-primary" : "text-background"}`}>
-            {addedMessage ? `✓ ${addedMessage}` : t("recipe.addToPlan")}
-          </Text>
-        </Pressable>
-      </View>
+      <SafeAreaView edges={["bottom"]} className="bg-background border-t border-border">
+        <View className="px-4 py-3">
+          <Pressable
+            onPress={() => setModalVisible(true)}
+            className={`py-4 rounded-full items-center border ${
+              addedMessage 
+                ? "bg-surface border-primary" 
+                : "bg-primary border-primary"
+            }`}
+          >
+            <Text className={`text-base font-bold ${addedMessage ? "text-primary" : "text-background"}`}>
+              {addedMessage ? `✓ ${addedMessage}` : t("recipe.addToPlan")}
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
 
       {modalVisible && (
         <View 

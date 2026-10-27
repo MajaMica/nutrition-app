@@ -198,6 +198,7 @@ export default {
     selectDay: "Izaberi dan",
     selectMeal: "Izaberi obrok",
     confirm: "Potvrdi",
+    addedFor: "Dodato za",
   },
  plan: {
   title: "Plan ishrane",
